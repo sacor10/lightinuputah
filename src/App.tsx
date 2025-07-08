@@ -6,17 +6,19 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <header className="header">
-  <div className="header-image-container">
-    <img src={headerImage} alt="LightinUpUtah" className="header-logo-image" />
-  </div>
-  <nav className="header-nav">
-    <div className="container">
-      <a href="#services">Services</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#contact">Contact</a>
-    </div>
-  </nav>
-</header>
+        <div className="header-flex">
+          <div className="header-image-container">
+            <img src={headerImage} alt="LightinUpUtah" className="header-logo-image" />
+          </div>
+          <nav className="header-nav">
+            <div className="container">
+              <a href="#services">Services</a>
+              <a href="#gallery">Gallery</a>
+              <a href="#contact">Contact</a>
+            </div>
+          </nav>
+        </div>
+      </header>
 
       <section className="hero">
         <div className="container">
@@ -39,8 +41,8 @@ const App: React.FC = () => {
               <p>Custom halo lighting for headlights and taillights</p>
             </div>
             <div className="service-card">
-              <h3>Light Bars</h3>
-              <p>LED light bars for enhanced visibility and style</p>
+              <h3>LED Strips</h3>
+              <p>LED light strips for enhanced visibility and style</p>
             </div>
             <div className="service-card">
               <h3>Underglow</h3>
