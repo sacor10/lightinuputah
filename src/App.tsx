@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import headerImage from './images/lightin-up-utah-header.jpg';
+import Gallery from './components/Gallery';
 
 const App: React.FC = () => {
   return (
@@ -57,10 +58,7 @@ const App: React.FC = () => {
       </section>
 
       <section id="gallery" className="gallery">
-        <div className="container">
-          <h2>Gallery</h2>
-          <p className="gallery-placeholder">Photo gallery coming soon - check out our Instagram for latest work!</p>
-        </div>
+        <Gallery />
       </section>
 
       <section id="contact" className="contact">
