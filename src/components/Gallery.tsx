@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { createClient } from 'contentful';
 import './Gallery.css';
 
-// Replace with your Contentful space and access token
-const SPACE_ID = 't1sp0p547p5j';
-const ACCESS_TOKEN = 'Gkh_nWrGd8CVpBnJ1q92nE0YVsomXalZk3bJrdTUbIY';
+// Contentful configuration from environment variables
+const SPACE_ID = process.env.REACT_APP_CONTENTFUL_SPACE_ID;
+const ACCESS_TOKEN = process.env.REACT_APP_CONTENTFUL_ACCESS_TOKEN;
 
 // The Contentful content type ID for your gallery items
 const CONTENT_TYPE = 'galleryItem';
@@ -30,6 +30,13 @@ const Gallery: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if environment variables are set
+    if (!SPACE_ID || !ACCESS_TOKEN) {
+      console.error('Contentful environment variables are not set. Please check your .env file.');
+      setLoading(false);
+      return;
+    }
+
     const client = createClient({
       space: SPACE_ID,
       accessToken: ACCESS_TOKEN,
