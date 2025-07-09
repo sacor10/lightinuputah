@@ -22,6 +22,13 @@ interface GalleryItemFields {
   description?: string;
 }
 
+// Spinner component for loading states
+const Spinner: React.FC = () => (
+  <div className="spinner">
+    <div className="spinner-inner"></div>
+  </div>
+);
+
 const Gallery: React.FC = () => {
   const [items, setItems] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
@@ -29,6 +36,7 @@ const Gallery: React.FC = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [itemsToShow, setItemsToShow] = useState(10);
 
   useEffect(() => {
@@ -74,10 +82,16 @@ const Gallery: React.FC = () => {
     }
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    
+    // Simulate a small delay to show the loading state and make the transition smoother
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
     const nextItems = filtered.slice(0, itemsToShow + 10);
     setDisplayedItems(nextItems);
     setItemsToShow(itemsToShow + 10);
+    setLoadingMore(false);
   };
 
   return (
@@ -104,7 +118,10 @@ const Gallery: React.FC = () => {
         ))}
       </div>
       {loading ? (
-        <div className="gallery-loading">Loading gallery...</div>
+        <div className="gallery-loading">
+          <Spinner />
+          <p>Loading gallery...</p>
+        </div>
       ) : (
         <>
           <div className="gallery-grid">
@@ -128,12 +145,19 @@ const Gallery: React.FC = () => {
           </div>
           {displayedItems.length < filtered.length && (
             <div className="gallery-load-more">
-              <button 
-                className="load-more-btn"
-                onClick={handleLoadMore}
-              >
-                Load More ({filtered.length - displayedItems.length} remaining)
-              </button>
+              {loadingMore ? (
+                <div className="loading-more-container">
+                  <Spinner />
+                  <p>Loading more images...</p>
+                </div>
+              ) : (
+                <button 
+                  className="load-more-btn"
+                  onClick={handleLoadMore}
+                >
+                  Load More ({filtered.length - displayedItems.length} remaining)
+                </button>
+              )}
             </div>
           )}
         </>
