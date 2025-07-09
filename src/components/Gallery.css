@@ -73,7 +73,7 @@
     max-width: 100%;
     max-height: 350px;
     object-fit: contain;
-    background: linear-gradient(135deg, #fce7f3 0%, #dcfce7 50%, #dbeafe 100%);
+    background: #333;
     display: block;
     margin: 0 auto;
     /* Remove fixed height */

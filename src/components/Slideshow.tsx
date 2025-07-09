@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createClient } from 'contentful';
 import './Slideshow.css';
 
@@ -24,6 +24,15 @@ const Slideshow: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<string | null>(null);
+  
+  // Touch/swipe state
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const slideshowRef = useRef<HTMLDivElement>(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   useEffect(() => {
     // Check if environment variables are set
@@ -164,6 +173,40 @@ const Slideshow: React.FC = () => {
     }, 300);
   };
 
+  // Touch event handlers for swipe functionality
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsSwiping(false);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+    if (touchStart && Math.abs(e.targetTouches[0].clientX - touchStart) > 10) {
+      setIsSwiping(true);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setIsSwiping(false);
+      return;
+    }
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      goToNext();
+    }
+    if (isRightSwipe) {
+      goToPrevious();
+    }
+    
+    setIsSwiping(false);
+  };
+
   if (loading) {
     return (
       <div className="slideshow-container">
@@ -181,13 +224,19 @@ const Slideshow: React.FC = () => {
   }
 
   return (
-    <div className="slideshow-container">
+    <div 
+      className="slideshow-container"
+      ref={slideshowRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <div className="slideshow-wrapper">
         <button className="slideshow-button slideshow-prev" onClick={goToPrevious}>
           &#8249;
         </button>
         
-        <div className="slideshow-slide">
+        <div className={`slideshow-slide ${isSwiping ? 'swiping' : ''}`}>
           <img 
             src={filteredItems[currentIndex]?.imageUrl} 
             alt={filteredItems[currentIndex]?.title}

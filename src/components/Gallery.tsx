@@ -37,7 +37,7 @@ const Gallery: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [itemsToShow, setItemsToShow] = useState(10);
+  const [itemsToShow, setItemsToShow] = useState(6);
 
   useEffect(() => {
     // Check if environment variables are set
@@ -59,7 +59,7 @@ const Gallery: React.FC = () => {
         );
         setItems(sortedItems);
         setFiltered(sortedItems);
-        setDisplayedItems(sortedItems.slice(0, 10));
+        setDisplayedItems(sortedItems.slice(0, 6));
         // Extract unique categories
         const cats = Array.from(new Set(sortedItems.map((item: any) => item.fields.category)));
         setCategories(cats);
@@ -70,15 +70,15 @@ const Gallery: React.FC = () => {
 
   const handleFilter = (category: string) => {
     setActiveCategory(category);
-    setItemsToShow(10); // Reset to show first 10 items when filtering
+    setItemsToShow(6); // Reset to show first 6 items when filtering
     if (category === 'All') {
       const newFiltered = items;
       setFiltered(newFiltered);
-      setDisplayedItems(newFiltered.slice(0, 10));
+      setDisplayedItems(newFiltered.slice(0, 6));
     } else {
       const newFiltered = items.filter(item => item.fields.category === category);
       setFiltered(newFiltered);
-      setDisplayedItems(newFiltered.slice(0, 10));
+      setDisplayedItems(newFiltered.slice(0, 6));
     }
   };
 
@@ -88,9 +88,9 @@ const Gallery: React.FC = () => {
     // Simulate a small delay to show the loading state and make the transition smoother
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    const nextItems = filtered.slice(0, itemsToShow + 10);
+    const nextItems = filtered.slice(0, itemsToShow + 6);
     setDisplayedItems(nextItems);
-    setItemsToShow(itemsToShow + 10);
+    setItemsToShow(itemsToShow + 6);
     setLoadingMore(false);
   };
 
@@ -134,7 +134,6 @@ const Gallery: React.FC = () => {
                   alt={item.fields.title}
                 />
                 <div className="gallery-overlay">
-                  <h3>{item.fields.title}</h3>
                   {item.fields.category && (
                     <span className="category-tag">{item.fields.category}</span>
                   )}

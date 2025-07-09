@@ -45,20 +45,20 @@ const App: React.FC = () => {
           <h2>Our Services</h2>
           <div className="services-grid">
             <div className="service-card">
-              <h3>Halos</h3>
-              <p>Custom halo lighting for headlights and taillights</p>
+              <h3>Full LED Systems</h3>
+              <p>Complete LED lighting system installations for your vehicle</p>
             </div>
             <div className="service-card">
-              <h3>LED Strips</h3>
-              <p>LED light strips for enhanced visibility and style</p>
+              <h3>Headlights</h3>
+              <p>Custom headlight modifications and LED upgrades</p>
             </div>
             <div className="service-card">
-              <h3>Underglow</h3>
-              <p>Stunning underglow lighting systems</p>
+              <h3>Starlights/Interior Lights</h3>
+              <p>Interior lighting solutions including starlight headliners</p>
             </div>
             <div className="service-card">
-              <h3>Custom Solutions</h3>
-              <p>Anything in between - we handle all LED installations</p>
+              <h3>Underglow/Exterior Lights</h3>
+              <p>Exterior lighting including underglow and accent lighting</p>
             </div>
           </div>
         </div>

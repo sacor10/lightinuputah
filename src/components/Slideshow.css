@@ -4,6 +4,13 @@
   background: #000;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  /* Prevent text selection during swipes */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Improve touch responsiveness */
+  touch-action: pan-y pinch-zoom;
 }
 
 .slideshow-wrapper {
@@ -20,6 +27,13 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  /* Smooth transitions for swipe feedback */
+  transition: transform 0.1s ease-out;
+}
+
+.slideshow-slide.swiping {
+  /* Disable transitions during swipe for better performance */
+  transition: none;
 }
 
 .slideshow-image {
@@ -95,7 +109,7 @@
   transform: translateY(-50%);
   background: rgba(0, 0, 0, 0.5);
   color: white;
-  border: none;
+  border: 2px solid white;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -106,11 +120,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: bold;
 }
 
 .slideshow-button:hover {
   background: rgba(0, 0, 0, 0.8);
   transform: translateY(-50%) scale(1.1);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .slideshow-prev {
@@ -168,6 +186,11 @@
   .slideshow-wrapper {
     height: 50vw;
     max-height: 45vh;
+  }
+  
+  /* Improve touch experience on mobile */
+  .slideshow-container {
+    touch-action: pan-y;
   }
   
   .slideshow-loading,
