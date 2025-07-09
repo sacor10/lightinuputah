@@ -1,0 +1,248 @@
+.slideshow-container {
+  width: 100%;
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.slideshow-wrapper {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slideshow-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slideshow-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.6s ease-in-out;
+}
+
+.slideshow-image.fade-in {
+  opacity: 1;
+}
+
+.slideshow-image.fade-out {
+  opacity: 0;
+}
+
+.slideshow-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  color: white;
+  padding: 40px 20px 20px;
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+}
+
+.slideshow-title {
+  margin: 0 0 10px 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.slideshow-category {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  backdrop-filter: blur(10px);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.slideshow-category:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.slideshow-category.active-filter {
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.slideshow-description {
+  margin: 10px 0 0 0;
+  font-size: 1rem;
+  line-height: 1.4;
+  opacity: 0.9;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.slideshow-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slideshow-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slideshow-prev {
+  left: 20px;
+}
+
+.slideshow-next {
+  right: 20px;
+}
+
+.slideshow-indicators {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.slideshow-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.slideshow-indicator:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.slideshow-indicator.active {
+  background: white;
+  border-color: white;
+  transform: scale(1.2);
+}
+
+.slideshow-loading,
+.slideshow-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  color: white;
+  font-size: 1.2rem;
+  background: #333;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .slideshow-wrapper {
+    height: 50vw;
+    max-height: 45vh;
+  }
+  
+  .slideshow-loading,
+  .slideshow-empty {
+    height: 50vw;
+    max-height: 45vh;
+  }
+  
+  .slideshow-image {
+    object-fit: cover;
+  }
+  
+  .slideshow-title {
+    font-size: 1.4rem;
+  }
+  
+  .slideshow-description {
+    font-size: 0.9rem;
+  }
+  
+  .slideshow-button {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .slideshow-prev {
+    left: 10px;
+  }
+  
+  .slideshow-next {
+    right: 10px;
+  }
+  
+  .slideshow-overlay {
+    padding: 30px 15px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .slideshow-wrapper {
+    height: 60vw;
+    max-height: 35vh;
+  }
+  
+  .slideshow-loading,
+  .slideshow-empty {
+    height: 60vw;
+    max-height: 35vh;
+  }
+  
+  .slideshow-image {
+    object-fit: cover;
+  }
+  
+  .slideshow-title {
+    font-size: 1.2rem;
+  }
+  
+  .slideshow-description {
+    font-size: 0.8rem;
+  }
+  
+  .slideshow-button {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+  
+  .slideshow-indicators {
+    bottom: 15px;
+  }
+  
+  .slideshow-indicator {
+    width: 10px;
+    height: 10px;
+  }
+} 

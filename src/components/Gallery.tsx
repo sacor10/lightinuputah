@@ -25,9 +25,11 @@ interface GalleryItemFields {
 const Gallery: React.FC = () => {
   const [items, setItems] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
+  const [displayedItems, setDisplayedItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [loading, setLoading] = useState(true);
+  const [itemsToShow, setItemsToShow] = useState(10);
 
   useEffect(() => {
     // Check if environment variables are set
@@ -44,10 +46,14 @@ const Gallery: React.FC = () => {
 
     client.getEntries({ content_type: CONTENT_TYPE })
       .then((response) => {
-        setItems(response.items);
-        setFiltered(response.items);
+        const sortedItems = response.items.sort((a: any, b: any) => 
+          a.fields.title.localeCompare(b.fields.title)
+        );
+        setItems(sortedItems);
+        setFiltered(sortedItems);
+        setDisplayedItems(sortedItems.slice(0, 10));
         // Extract unique categories
-        const cats = Array.from(new Set(response.items.map((item: any) => item.fields.category)));
+        const cats = Array.from(new Set(sortedItems.map((item: any) => item.fields.category)));
         setCategories(cats);
         setLoading(false);
       })
@@ -56,11 +62,22 @@ const Gallery: React.FC = () => {
 
   const handleFilter = (category: string) => {
     setActiveCategory(category);
+    setItemsToShow(10); // Reset to show first 10 items when filtering
     if (category === 'All') {
-      setFiltered(items);
+      const newFiltered = items;
+      setFiltered(newFiltered);
+      setDisplayedItems(newFiltered.slice(0, 10));
     } else {
-      setFiltered(items.filter(item => item.fields.category === category));
+      const newFiltered = items.filter(item => item.fields.category === category);
+      setFiltered(newFiltered);
+      setDisplayedItems(newFiltered.slice(0, 10));
     }
+  };
+
+  const handleLoadMore = () => {
+    const nextItems = filtered.slice(0, itemsToShow + 10);
+    setDisplayedItems(nextItems);
+    setItemsToShow(itemsToShow + 10);
   };
 
   return (
@@ -89,25 +106,37 @@ const Gallery: React.FC = () => {
       {loading ? (
         <div className="gallery-loading">Loading gallery...</div>
       ) : (
-        <div className="gallery-grid">
-          {filtered.map(item => (
-            <div className="gallery-item" key={item.sys.id}>
-              <img
-                src={item.fields.image.fields.file.url.startsWith('http')
-                  ? item.fields.image.fields.file.url
-                  : `https:${item.fields.image.fields.file.url}`}
-                alt={item.fields.title}
-              />
-              <div className="gallery-overlay">
-                <h3>{item.fields.title}</h3>
-                {item.fields.category && (
-                  <span className="category-tag">{item.fields.category}</span>
-                )}
-                {item.fields.description && <p>{item.fields.description}</p>}
+        <>
+          <div className="gallery-grid">
+            {displayedItems.map(item => (
+              <div className="gallery-item" key={item.sys.id}>
+                <img
+                  src={item.fields.image.fields.file.url.startsWith('http')
+                    ? item.fields.image.fields.file.url
+                    : `https:${item.fields.image.fields.file.url}`}
+                  alt={item.fields.title}
+                />
+                <div className="gallery-overlay">
+                  <h3>{item.fields.title}</h3>
+                  {item.fields.category && (
+                    <span className="category-tag">{item.fields.category}</span>
+                  )}
+                  {item.fields.description && <p>{item.fields.description}</p>}
+                </div>
               </div>
+            ))}
+          </div>
+          {displayedItems.length < filtered.length && (
+            <div className="gallery-load-more">
+              <button 
+                className="load-more-btn"
+                onClick={handleLoadMore}
+              >
+                Load More ({filtered.length - displayedItems.length} remaining)
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

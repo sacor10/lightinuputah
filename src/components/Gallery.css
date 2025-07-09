@@ -2,7 +2,7 @@
 .gallery-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0 2rem;
   }
   
   .gallery-header {
@@ -13,12 +13,12 @@
   .gallery-header h2 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
-    color: #333;
+    color: white;
   }
   
   .gallery-header p {
     font-size: 1.1rem;
-    color: #666;
+    color: #e2e8f0;
   }
   
   .category-filter {
@@ -116,7 +116,30 @@
     text-align: center;
     padding: 4rem;
     font-size: 1.2rem;
-    color: #666;
+    color: #e2e8f0;
+  }
+
+  .gallery-load-more {
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  .load-more-btn {
+    background: linear-gradient(45deg, #00d4ff, #0099cc);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+  }
+
+  .load-more-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
   }
   
   /* Responsive adjustments */

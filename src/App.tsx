@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import headerImage from './images/lightin-up-utah-header.jpg';
 import Gallery from './components/Gallery';
+import Slideshow from './components/Slideshow';
 
 const App: React.FC = () => {
   return (
@@ -20,6 +21,12 @@ const App: React.FC = () => {
           </nav>
         </div>
       </header>
+
+      <section className="slideshow-section">
+        <div className="container">
+          <Slideshow />
+        </div>
+      </section>
 
       <section className="hero">
         <div className="container">
