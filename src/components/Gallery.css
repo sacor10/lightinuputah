@@ -38,12 +38,27 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
+    position: relative;
+    overflow: hidden;
   }
   
-  .filter-btn:hover,
+  .filter-btn:hover {
+    background: #007bff;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+  
   .filter-btn.active {
     background: #007bff;
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4);
+  }
+  
+  .filter-btn:active {
+    transform: translateY(0);
+    transition: transform 0.1s ease;
   }
   
   .gallery-grid {
@@ -122,6 +137,7 @@
   .category-tag.clickable {
     cursor: pointer;
     transition: all 0.3s ease;
+    position: relative;
   }
 
   .category-tag.clickable:hover {
@@ -133,10 +149,18 @@
   .category-tag.clickable.active {
     background: #28a745;
     color: white;
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(40, 167, 69, 0.4);
   }
 
   .category-tag.clickable.active:hover {
     background: #218838;
+    transform: scale(1.15);
+  }
+  
+  .category-tag.clickable:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
   }
   
   .gallery-loading {

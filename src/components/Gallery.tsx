@@ -129,16 +129,26 @@ const Gallery: React.FC = () => {
   }, []);
 
   const handleFilter = (category: string) => {
-    setActiveCategory(category);
-    setItemsToShow(6); // Reset to show first 6 items when filtering
-    if (category === 'All') {
+    // If clicking the same category that's already active, toggle to 'All'
+    if (activeCategory === category) {
+      setActiveCategory('All');
+      setItemsToShow(6); // Reset to show first 6 items when filtering
       const newFiltered = items;
       setFiltered(newFiltered);
       setDisplayedItems(newFiltered.slice(0, 6));
     } else {
-      const newFiltered = items.filter(item => item.fields.category === category);
-      setFiltered(newFiltered);
-      setDisplayedItems(newFiltered.slice(0, 6));
+      // Otherwise, set the new category
+      setActiveCategory(category);
+      setItemsToShow(6); // Reset to show first 6 items when filtering
+      if (category === 'All') {
+        const newFiltered = items;
+        setFiltered(newFiltered);
+        setDisplayedItems(newFiltered.slice(0, 6));
+      } else {
+        const newFiltered = items.filter(item => item.fields.category === category);
+        setFiltered(newFiltered);
+        setDisplayedItems(newFiltered.slice(0, 6));
+      }
     }
   };
 
@@ -208,12 +218,7 @@ const Gallery: React.FC = () => {
                       className={`category-tag clickable${activeCategory === item.fields.category ? ' active' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        // If the clicked category is already active, reset to 'All'
-                        if (activeCategory === item.fields.category) {
-                          handleFilter('All');
-                        } else {
-                          handleFilter(item.fields.category);
-                        }
+                        handleFilter(item.fields.category);
                       }}
                     >
                       {item.fields.category}
