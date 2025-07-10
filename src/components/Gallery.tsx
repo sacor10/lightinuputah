@@ -40,20 +40,30 @@ const Gallery: React.FC = () => {
   const [itemsToShow, setItemsToShow] = useState(6);
 
   useEffect(() => {
+    // Debug logging
+    console.log('Gallery component: Checking environment variables...');
+    console.log('SPACE_ID:', SPACE_ID ? 'Set' : 'Not set');
+    console.log('ACCESS_TOKEN:', ACCESS_TOKEN ? 'Set' : 'Not set');
+    
     // Check if environment variables are set
     if (!SPACE_ID || !ACCESS_TOKEN) {
       console.error('Contentful environment variables are not set. Please check your .env file.');
+      console.error('SPACE_ID:', SPACE_ID);
+      console.error('ACCESS_TOKEN:', ACCESS_TOKEN);
       setLoading(false);
       return;
     }
 
+    console.log('Gallery component: Creating Contentful client...');
     const client = createClient({
       space: SPACE_ID,
       accessToken: ACCESS_TOKEN,
     });
 
+    console.log('Gallery component: Fetching entries from Contentful...');
     client.getEntries({ content_type: CONTENT_TYPE })
       .then((response) => {
+        console.log('Gallery component: Contentful response received:', response.items.length, 'items');
         const sortedItems = response.items.sort((a: any, b: any) => 
           a.fields.title.localeCompare(b.fields.title)
         );
@@ -64,8 +74,12 @@ const Gallery: React.FC = () => {
         const cats = Array.from(new Set(sortedItems.map((item: any) => item.fields.category)));
         setCategories(cats);
         setLoading(false);
+        console.log('Gallery component: Gallery loaded successfully');
       })
-      .catch(() => setLoading(false));
+      .catch((error) => {
+        console.error('Gallery component: Error fetching from Contentful:', error);
+        setLoading(false);
+      });
   }, []);
 
   const handleFilter = (category: string) => {
