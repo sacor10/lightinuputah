@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import headerImage from './images/lightin-up-utah-header.jpg';
+import headerImage from './images/logo.png';
 import Gallery from './components/Gallery';
 import Slideshow from './components/Slideshow';
 
@@ -75,7 +75,7 @@ const App: React.FC = () => {
             <p><strong>Location:</strong> Salt Lake City, Utah</p>
             <p><strong>Email:</strong> lightinuputah@gmail.com</p>
             <p><strong>Instagram:</strong> <a href="https://www.instagram.com/lightinuputah/" target="_blank" rel="noopener noreferrer">@lightinuputah</a></p>
-            <p><strong>Ready to light up your ride?</strong> Hit me up on Instagram!</p>
+            <p><strong>Ready to light up your ride?</strong> <a href="https://www.instagram.com/direct/t/104833807708713/" target="_blank" rel="noopener noreferrer">Hit me up on Instagram! →</a></p>
           </div>
         </div>
       </section>

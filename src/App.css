@@ -21,7 +21,7 @@ body {
 }
 
 .header {
-  background: linear-gradient(135deg, #87ceeb 0%, #1e40af 50%, #000000 100%);
+  background: url('./images/header-bg.jpg') center center/cover no-repeat;
   color: white;
   height: 290px;
   display: flex;
