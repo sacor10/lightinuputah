@@ -21,13 +21,28 @@
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "size-limit": "^11.1.3",
+    "webpack-bundle-analyzer": "^4.10.1"
+  },
+  "size-limit": [
+    {
+      "path": "build/static/js/*.js",
+      "limit": "100 kB"
+    },
+    {
+      "path": "build/static/css/*.css",
+      "limit": "10 kB"
+    }
+  ],
   "scripts": {
-    "start": "node server-heroku.js",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "node server.js",
     "serve-enhanced": "node server-enhanced.js",
+    "start:prod": "node server-heroku.js",
     "dev": "npm run build && npm run serve",
     "dev-enhanced": "npm run build && npm run serve-enhanced",
     "prod": "NODE_ENV=production npm run build && npm run serve",
@@ -41,13 +56,27 @@
     "pm2-stop": "pm2 stop ecosystem.config.js",
     "pm2-restart": "pm2 restart ecosystem.config.js",
     "pm2-logs": "pm2 logs",
-    "pm2-monitor": "pm2 monit"
+    "pm2-monitor": "pm2 monit",
+    "security:audit": "npm audit",
+    "security:fix": "npm audit fix",
+    "security:fix-force": "npm audit fix --force",
+    "security:update": "npm update",
+    "prebuild": "npm run security:audit",
+    "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "build:analyze": "GENERATE_SOURCEMAP=false npm run build",
+    "build:prod": "GENERATE_SOURCEMAP=false npm run build",
+    "build:stats": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js --mode static --report",
+    "size": "npm run build && npx size-limit"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
     ]
+  },
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x"
   },
   "browserslist": {
     "production": [

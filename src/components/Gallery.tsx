@@ -9,6 +9,7 @@ const ACCESS_TOKEN = process.env.REACT_APP_CONTENTFUL_ACCESS_TOKEN;
 // The Contentful content type ID for your gallery items
 const CONTENT_TYPE = 'galleryItem';
 
+// Interface for type safety (used in component logic)
 interface GalleryItemFields {
   title: string;
   image: {
@@ -136,6 +137,11 @@ const Gallery: React.FC = () => {
           <Spinner />
           <p>Loading gallery...</p>
         </div>
+      ) : items.length === 0 ? (
+        <div className="gallery-empty">
+          <p>Gallery content is currently unavailable.</p>
+          <p>Please check back later or contact us for more information.</p>
+        </div>
       ) : (
         <>
           <div className="gallery-grid">
@@ -146,6 +152,10 @@ const Gallery: React.FC = () => {
                     ? item.fields.image.fields.file.url
                     : `https:${item.fields.image.fields.file.url}`}
                   alt={item.fields.title}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
                 <div className="gallery-overlay">
                   {item.fields.category && (

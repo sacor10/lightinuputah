@@ -35,18 +35,27 @@ const Slideshow: React.FC = () => {
   const minSwipeDistance = 50;
 
   useEffect(() => {
+    // Debug logging
+    console.log('Slideshow component: Checking environment variables...');
+    console.log('SPACE_ID:', SPACE_ID ? 'Set' : 'Not set');
+    console.log('ACCESS_TOKEN:', ACCESS_TOKEN ? 'Set' : 'Not set');
+    
     // Check if environment variables are set
     if (!SPACE_ID || !ACCESS_TOKEN) {
       console.error('Contentful environment variables are not set. Please check your .env file.');
+      console.error('SPACE_ID:', SPACE_ID);
+      console.error('ACCESS_TOKEN:', ACCESS_TOKEN);
       setLoading(false);
       return;
     }
 
+    console.log('Slideshow component: Creating Contentful client...');
     const client = createClient({
       space: SPACE_ID,
       accessToken: ACCESS_TOKEN,
     });
 
+    console.log('Slideshow component: Fetching entries from Contentful...');
     client.getEntries({ 
       content_type: CONTENT_TYPE,
       limit: 100 // Get more items to ensure we have enough for the sorting logic
@@ -104,8 +113,12 @@ const Slideshow: React.FC = () => {
         setItems(slideshowItems);
         setFilteredItems(slideshowItems);
         setLoading(false);
+        console.log('Slideshow component: Slideshow loaded successfully with', slideshowItems.length, 'items');
       })
-      .catch(() => setLoading(false));
+      .catch((error) => {
+        console.error('Slideshow component: Error fetching from Contentful:', error);
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -218,7 +231,10 @@ const Slideshow: React.FC = () => {
   if (filteredItems.length === 0) {
     return (
       <div className="slideshow-container">
-        <div className="slideshow-empty">No images available</div>
+        <div className="slideshow-empty">
+          <p>Slideshow content is currently unavailable.</p>
+          <p>Please check back later or contact us for more information.</p>
+        </div>
       </div>
     );
   }
