@@ -62,20 +62,65 @@ const Gallery: React.FC = () => {
     });
 
     console.log('Gallery component: Fetching entries from Contentful...');
-    client.getEntries({ content_type: CONTENT_TYPE })
+    client.getEntries({ 
+      content_type: CONTENT_TYPE,
+      limit: 100 // Get more items to ensure we have enough for the sorting logic
+    })
       .then((response) => {
         console.log('Gallery component: Contentful response received:', response.items.length, 'items');
+        
+        // Sort all items alphabetically by title
         const sortedItems = response.items.sort((a: any, b: any) => 
           a.fields.title.localeCompare(b.fields.title)
         );
-        setItems(sortedItems);
-        setFiltered(sortedItems);
-        setDisplayedItems(sortedItems.slice(0, 6));
-        // Extract unique categories
-        const cats = Array.from(new Set(sortedItems.map((item: any) => item.fields.category)));
-        setCategories(cats);
+
+        // Get unique categories sorted A-Z (filter out null/undefined categories)
+        const categories = Array.from(new Set(
+          sortedItems
+            .map((item: any) => item.fields.category)
+            .filter((category: any): category is string => typeof category === 'string')
+        )).sort();
+
+        // Group items by category
+        const itemsByCategory = new Map<string, any[]>();
+        sortedItems.forEach(item => {
+          const category = item.fields.category;
+          if (typeof category === 'string') {
+            if (!itemsByCategory.has(category)) {
+              itemsByCategory.set(category, []);
+            }
+            itemsByCategory.get(category)!.push(item);
+          }
+        });
+
+        // Create round-robin order: one from each category in sequence
+        const roundRobinItems: any[] = [];
+        let maxItemsPerCategory = 0;
+        
+        // Find the maximum number of items in any category
+        categories.forEach(category => {
+          const categoryItems = itemsByCategory.get(category);
+          if (categoryItems) {
+            maxItemsPerCategory = Math.max(maxItemsPerCategory, categoryItems.length);
+          }
+        });
+
+        // Build round-robin order
+        for (let round = 0; round < maxItemsPerCategory; round++) {
+          categories.forEach(category => {
+            const categoryItems = itemsByCategory.get(category);
+            if (categoryItems && categoryItems[round]) {
+              roundRobinItems.push(categoryItems[round]);
+            }
+          });
+        }
+
+        setItems(roundRobinItems);
+        setFiltered(roundRobinItems);
+        setDisplayedItems(roundRobinItems.slice(0, 6));
+        setCategories(categories);
         setLoading(false);
-        console.log('Gallery component: Gallery loaded successfully');
+        console.log('Gallery component: Gallery loaded successfully with round-robin ordering');
       })
       .catch((error) => {
         console.error('Gallery component: Error fetching from Contentful:', error);
@@ -159,7 +204,20 @@ const Gallery: React.FC = () => {
                 />
                 <div className="gallery-overlay">
                   {item.fields.category && (
-                    <span className="category-tag">{item.fields.category}</span>
+                    <span 
+                      className={`category-tag clickable${activeCategory === item.fields.category ? ' active' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // If the clicked category is already active, reset to 'All'
+                        if (activeCategory === item.fields.category) {
+                          handleFilter('All');
+                        } else {
+                          handleFilter(item.fields.category);
+                        }
+                      }}
+                    >
+                      {item.fields.category}
+                    </span>
                   )}
                   {item.fields.description && <p>{item.fields.description}</p>}
                 </div>

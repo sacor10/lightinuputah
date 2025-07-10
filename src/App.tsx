@@ -74,7 +74,7 @@ const App: React.FC = () => {
           <div className="contact-info">
             <p><strong>Location:</strong> Salt Lake City, Utah</p>
             <p><strong>Email:</strong> lightinuputah@gmail.com</p>
-            <p><strong>Instagram:</strong> @lightinuputah</p>
+            <p><strong>Instagram:</strong> <a href="https://www.instagram.com/lightinuputah/" target="_blank" rel="noopener noreferrer">@lightinuputah</a></p>
             <p><strong>Ready to light up your ride?</strong> Hit me up on Instagram!</p>
           </div>
         </div>

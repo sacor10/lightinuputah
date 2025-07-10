@@ -118,6 +118,26 @@
     text-transform: uppercase;
     font-weight: 500;
   }
+
+  .category-tag.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .category-tag.clickable:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  }
+
+  .category-tag.clickable.active {
+    background: #28a745;
+    color: white;
+  }
+
+  .category-tag.clickable.active:hover {
+    background: #218838;
+  }
   
   .gallery-loading {
     text-align: center;
