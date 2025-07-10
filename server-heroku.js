@@ -1,282 +1,273 @@
-const cluster = require('node:cluster');
-const http = require('node:http');
-const { availableParallelism } = require('node:os');
-const process = require('node:process');
-const path = require('node:path');
-const fs = require('node:fs');
-const zlib = require('node:zlib');
-const config = require('./heroku-config');
+const cluster = require('cluster');
+const os = require('os');
+const express = require('express');
+const path = require('path');
+const compression = require('compression');
+const helmet = require('helmet');
 
-// Heroku has limited resources, so we use fewer workers
-const numCPUs = Math.min(config.cluster.workers, availableParallelism());
-const PORT = config.server.port;
+// Heroku-specific configuration
+const PORT = process.env.PORT || 3000;
+const WORKER_COUNT = process.env.WEB_CONCURRENCY || os.cpus().length;
+const MEMORY_LIMIT = process.env.MEMORY_LIMIT || 512; // MB
+const RESTART_INTERVAL = process.env.RESTART_INTERVAL || 24 * 60 * 60 * 1000; // 24 hours
 
-// Memory monitoring optimized for Heroku
-class HerokuMemoryManager {
-  constructor(workerId) {
-    this.workerId = workerId;
-    this.startTime = Date.now();
-    this.restartCount = 0;
-    this.maxRestarts = 5; // Lower for Heroku
-  }
+if (cluster.isMaster) {
+    console.log(`[Primary] Master process ${process.pid} is running`);
+    console.log(`[Primary] Starting ${WORKER_COUNT} workers`);
+    console.log(`[Primary] Memory limit: ${MEMORY_LIMIT}MB`);
+    console.log(`[Primary] Restart interval: ${RESTART_INTERVAL / (60 * 60 * 1000)} hours`);
 
-  logMemoryUsage() {
-    const memUsage = process.memoryUsage();
-    const usage = {
-      rss: Math.round(memUsage.rss / 1024 / 1024),
-      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
-      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-      external: Math.round(memUsage.external / 1024 / 1024),
-      uptime: Math.round((Date.now() - this.startTime) / 1000)
-    };
+    // Track worker processes
+    const workers = new Map();
+    let workerId = 1;
 
-    // Use Heroku's logging format
-    console.log(`[${this.workerId}] Memory: RSS=${usage.rss}MB, Heap=${usage.heapUsed}MB/${usage.heapTotal}MB, Uptime=${usage.uptime}s`);
+    // Function to create a new worker
+    function createWorker() {
+        const worker = cluster.fork({
+            WORKER_ID: workerId,
+            NODE_ENV: process.env.NODE_ENV || 'production'
+        });
 
-    // Check if memory usage exceeds threshold
-    if (usage.heapUsed > config.cluster.memoryThreshold) {
-      console.warn(`[${this.workerId}] Memory threshold exceeded! Heap used: ${usage.heapUsed}MB`);
-      this.handleMemoryPressure();
+        workers.set(worker.id, {
+            id: workerId,
+            startTime: Date.now(),
+            restartCount: 0
+        });
+
+        console.log(`[Primary] Started worker ${workerId} (PID: ${worker.process.pid})`);
+        workerId++;
+
+        // Handle worker messages
+        worker.on('message', (msg) => {
+            if (msg.type === 'memory_usage') {
+                const workerInfo = workers.get(worker.id);
+                if (workerInfo) {
+                    workerInfo.memoryUsage = msg.memory;
+                    workerInfo.lastUpdate = Date.now();
+                }
+            }
+        });
+
+        // Handle worker exit
+        worker.on('exit', (code, signal) => {
+            const workerInfo = workers.get(worker.id);
+            if (workerInfo) {
+                console.log(`[Primary] Worker ${workerInfo.id} (PID: ${worker.process.pid}) exited with code ${code} and signal ${signal}`);
+                workers.delete(worker.id);
+            }
+
+            // Restart worker after a short delay
+            setTimeout(() => {
+                console.log(`[Primary] Restarting worker ${workerInfo?.id || 'unknown'}`);
+                createWorker();
+            }, 1000);
+        });
+
+        return worker;
     }
 
-    return usage;
-  }
+    // Start initial workers
+    for (let i = 0; i < WORKER_COUNT; i++) {
+        createWorker();
+    }
 
-  handleMemoryPressure() {
-    if (this.restartCount < this.maxRestarts) {
-      console.log(`[${this.workerId}] Initiating graceful restart due to memory pressure...`);
-      this.restartCount++;
-      
-      // Force garbage collection if available
-      if (global.gc) {
-        global.gc();
-        console.log(`[${this.workerId}] Garbage collection performed`);
-      }
-      
-      // Restart worker after a short delay
-      setTimeout(() => {
+    // Memory monitoring and worker management
+    setInterval(() => {
+        console.log(`[Primary] Active workers: ${workers.size}`);
+        
+        workers.forEach((workerInfo, workerId) => {
+            const worker = cluster.workers[workerId];
+            if (worker && workerInfo.memoryUsage) {
+                const memoryMB = workerInfo.memoryUsage.rss / 1024 / 1024;
+                const uptime = Math.floor((Date.now() - workerInfo.startTime) / 1000);
+                
+                console.log(`[Worker-${workerInfo.id}] Memory: ${memoryMB.toFixed(1)}MB, Uptime: ${uptime}s`);
+                
+                // Restart worker if memory usage is too high
+                if (memoryMB > MEMORY_LIMIT) {
+                    console.log(`[Primary] Worker ${workerInfo.id} memory usage (${memoryMB.toFixed(1)}MB) exceeds limit (${MEMORY_LIMIT}MB). Restarting...`);
+                    worker.kill();
+                }
+                
+                // Restart worker if it's been running too long (prevent memory leaks)
+                if (uptime > RESTART_INTERVAL / 1000) {
+                    console.log(`[Primary] Worker ${workerInfo.id} uptime (${uptime}s) exceeds restart interval. Restarting...`);
+                    worker.kill();
+                }
+            }
+        });
+    }, 30000); // Check every 30 seconds
+
+    // Handle process termination
+    process.on('SIGTERM', () => {
+        console.log('[Primary] Received SIGTERM. Shutting down gracefully...');
+        Object.values(cluster.workers).forEach(worker => {
+            worker.kill();
+        });
         process.exit(0);
-      }, 1000);
-    } else {
-      console.error(`[${this.workerId}] Max restart limit reached. Manual intervention required.`);
-    }
-  }
+    });
 
-  startMonitoring() {
-    if (config.monitoring.enabled) {
-      setInterval(() => {
-        this.logMemoryUsage();
-      }, config.monitoring.interval);
-    }
-  }
-}
-
-// Compression middleware
-function compressResponse(data, acceptEncoding) {
-  if (!config.server.enableCompression) return data;
-  
-  if (acceptEncoding && acceptEncoding.includes('gzip')) {
-    return zlib.gzipSync(data);
-  } else if (acceptEncoding && acceptEncoding.includes('deflate')) {
-    return zlib.deflateSync(data);
-  }
-  return data;
-}
-
-
-
-// Heroku request ID tracking
-function addRequestId(req, res) {
-  if (config.heroku.enableRequestId) {
-    const requestId = req.headers['x-request-id'] || `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    res.setHeader('X-Request-ID', requestId);
-    return requestId;
-  }
-  return null;
-}
-
-if (cluster.isPrimary) {
-  console.log(`🚀 Heroku Primary ${process.pid} is running`);
-  console.log(`📊 Starting ${numCPUs} workers for Heroku optimization`);
-  console.log(`⚙️  Configuration:`, {
-    workers: numCPUs,
-    maxMemoryPerWorker: config.cluster.maxMemoryPerWorker + 'MB',
-    memoryThreshold: config.cluster.memoryThreshold + 'MB',
-    port: PORT
-  });
-
-  // Fork workers
-  for (let i = 0; i < numCPUs; i++) {
-    cluster.fork();
-  }
-
-  // Monitor worker events
-  cluster.on('exit', (worker, code, signal) => {
-    console.log(`💀 Worker ${worker.process.pid} died (${signal || code}). Restarting...`);
-    // Restart the worker for fault tolerance
-    cluster.fork();
-  });
-
-  cluster.on('online', (worker) => {
-    console.log(`✅ Worker ${worker.process.pid} is online`);
-  });
-
-  // Memory monitoring for primary process
-  const primaryMemoryManager = new HerokuMemoryManager('Primary');
-  primaryMemoryManager.startMonitoring();
-
-  // Graceful shutdown handling
-  process.on('SIGTERM', () => {
-    console.log('🛑 Primary process received SIGTERM. Shutting down workers...');
-    for (const id in cluster.workers) {
-      cluster.workers[id].kill();
-    }
-    process.exit(0);
-  });
+    process.on('SIGINT', () => {
+        console.log('[Primary] Received SIGINT. Shutting down gracefully...');
+        Object.values(cluster.workers).forEach(worker => {
+            worker.kill();
+        });
+        process.exit(0);
+    });
 
 } else {
-  // Worker process - create HTTP server
-  const memoryManager = new HerokuMemoryManager(`Worker-${cluster.worker.id}`);
-  memoryManager.startMonitoring();
+    // Worker process
+    const workerId = process.env.WORKER_ID || 'unknown';
+    const app = express();
 
-  const server = http.createServer((req, res) => {
-    // Add request ID for tracking
-    const requestId = addRequestId(req, res);
+    // Security middleware
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'none'"],
+            },
+        },
+        hsts: {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true
+        }
+    }));
 
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') {
-      res.writeHead(200);
-      res.end();
-      return;
-    }
-
-    // Health check endpoint for Heroku
-    if (req.url === config.heroku.healthCheckPath) {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        status: 'healthy',
-        worker: cluster.worker.id,
-        pid: process.pid,
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        requestId
-      }));
-      return;
-    }
-
-    let filePath = req.url === '/' ? '/index.html' : req.url;
-    const fullPath = path.join(__dirname, config.server.staticPath, filePath);
-
-    // Serve static files from build directory
-    fs.readFile(fullPath, (err, data) => {
-      if (err) {
-        // If file not found, serve index.html for SPA routing
-        if (err.code === 'ENOENT') {
-          fs.readFile(path.join(__dirname, config.server.staticPath, 'index.html'), (err, data) => {
-            if (err) {
-              res.writeHead(404, { 'Content-Type': 'text/plain' });
-              res.end('404 Not Found');
-            } else {
-              res.writeHead(200, { 
-                'Content-Type': 'text/html',
-                'Cache-Control': config.server.cacheControl.html
-              });
-              res.end(data);
+    // Compression middleware
+    app.use(compression({
+        level: 6,
+        threshold: 1024,
+        filter: (req, res) => {
+            if (req.headers['x-no-compression']) {
+                return false;
             }
-          });
-        } else {
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('500 Internal Server Error');
+            return compression.filter(req, res);
         }
-      } else {
-        // Determine content type based on file extension
-        const ext = path.extname(filePath);
-        let contentType = 'text/plain';
-        
-        switch (ext) {
-          case '.html':
-            contentType = 'text/html';
-            break;
-          case '.js':
-            contentType = 'application/javascript';
-            break;
-          case '.css':
-            contentType = 'text/css';
-            break;
-          case '.json':
-            contentType = 'application/json';
-            break;
-          case '.png':
-            contentType = 'image/png';
-            break;
-          case '.jpg':
-          case '.jpeg':
-            contentType = 'image/jpeg';
-            break;
-          case '.ico':
-            contentType = 'image/x-icon';
-            break;
-          case '.svg':
-            contentType = 'image/svg+xml';
-            break;
-        }
+    }));
 
-        // Compress response if supported
-        const compressedData = compressResponse(data, req.headers['accept-encoding']);
-        
-        // Prepare headers
-        const headers = {
-          'Content-Type': contentType,
-          'Content-Length': compressedData.length
+    // Cache control middleware
+    app.use((req, res, next) => {
+        // Cache static assets for 1 year
+        if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+        // Cache HTML for 1 hour
+        else if (req.path === '/' || req.path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+        }
+        // No cache for API routes
+        else if (req.path.startsWith('/api/')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+        next();
+    });
+
+    // Serve static files from the React app build directory
+    app.use(express.static(path.join(__dirname, 'build')));
+
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+        const memoryUsage = process.memoryUsage();
+        res.json({
+            status: 'healthy',
+            worker: workerId,
+            pid: process.pid,
+            memory: {
+                rss: Math.round(memoryUsage.rss / 1024 / 1024),
+                heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+                heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+                external: Math.round(memoryUsage.external / 1024 / 1024)
+            },
+            uptime: Math.floor(process.uptime())
+        });
+    });
+
+    // API routes can be added here
+    app.get('/api/status', (req, res) => {
+        res.json({
+            message: 'Lightin\' Up Utah API is running',
+            worker: workerId,
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    // Handle React routing, return all requests to React app
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'build', 'index.html'));
+    });
+
+    // Error handling middleware
+    app.use((err, req, res, next) => {
+        console.error(`[Worker-${workerId}] Error:`, err.stack);
+        res.status(500).json({
+            error: 'Something went wrong!',
+            worker: workerId
+        });
+    });
+
+    // Start server
+    const server = app.listen(PORT, () => {
+        console.log(`[Worker-${workerId}] Server running on port ${PORT} (PID: ${process.pid})`);
+    });
+
+    // Memory monitoring
+    setInterval(() => {
+        const memoryUsage = process.memoryUsage();
+        const memoryData = {
+            rss: Math.round(memoryUsage.rss / 1024 / 1024),
+            heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+            heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+            external: Math.round(memoryUsage.external / 1024 / 1024),
+            uptime: Math.floor(process.uptime())
         };
         
-        // Set cache headers
-        if (ext === '.html') {
-          headers['Cache-Control'] = config.server.cacheControl.html;
-        } else if (['.js', '.css', '.png', '.jpg', '.jpeg', '.ico', '.svg'].includes(ext)) {
-          headers['Cache-Control'] = config.server.cacheControl.static;
-        }
+        console.log(`[Worker-${workerId}] Memory Usage:`, memoryData);
         
-        // Set compression header if needed
-        if (compressedData !== data) {
-          headers['Content-Encoding'] = req.headers['accept-encoding'].includes('gzip') ? 'gzip' : 'deflate';
+        // Send memory usage to master process
+        if (process.send) {
+            process.send({
+                type: 'memory_usage',
+                memory: memoryData
+            });
         }
+    }, 30000); // Report every 30 seconds
 
-        res.writeHead(200, headers);
-        res.end(compressedData);
-      }
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+        console.log(`[Worker-${workerId}] Received SIGTERM. Shutting down gracefully...`);
+        server.close(() => {
+            console.log(`[Worker-${workerId}] Server closed`);
+            process.exit(0);
+        });
     });
-  });
 
-  // Set server timeouts for Heroku
-  server.timeout = config.performance.timeout.request;
-  server.keepAliveTimeout = config.performance.timeout.connection;
-
-  server.listen(PORT, config.server.host, () => {
-    console.log(`🎯 Heroku Worker ${process.pid} started on port ${PORT}`);
-  });
-
-  // Graceful shutdown handling
-  process.on('SIGTERM', () => {
-    console.log(`🛑 Worker ${process.pid} received SIGTERM. Shutting down gracefully...`);
-    server.close(() => {
-      console.log(`✅ Worker ${process.pid} closed server`);
-      process.exit(0);
+    process.on('SIGINT', () => {
+        console.log(`[Worker-${workerId}] Received SIGINT. Shutting down gracefully...`);
+        server.close(() => {
+            console.log(`[Worker-${workerId}] Server closed`);
+            process.exit(0);
+        });
     });
-  });
 
-  // Handle uncaught exceptions
-  process.on('uncaughtException', (err) => {
-    console.error(`❌ Worker ${process.pid} uncaught exception:`, err);
-    process.exit(1);
-  });
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (err) => {
+        console.error(`[Worker-${workerId}] Uncaught Exception:`, err);
+        process.exit(1);
+    });
 
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error(`❌ Worker ${process.pid} unhandled rejection at:`, promise, 'reason:', reason);
-    process.exit(1);
-  });
+    process.on('unhandledRejection', (reason, promise) => {
+        console.error(`[Worker-${workerId}] Unhandled Rejection at:`, promise, 'reason:', reason);
+        process.exit(1);
+    });
 } 
