@@ -17,6 +17,23 @@ interface SlideshowItem {
   description?: string;
 }
 
+// Hook to detect mobile devices
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  return isMobile;
+};
+
 const Slideshow: React.FC = () => {
   const [items, setItems] = useState<SlideshowItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<SlideshowItem[]>([]);
@@ -25,11 +42,14 @@ const Slideshow: React.FC = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<string | null>(null);
   
-  // Touch/swipe state
+  // Touch/swipe state for carousel (mobile only)
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
   const slideshowRef = useRef<HTMLDivElement>(null);
+
+  const isMobile = useIsMobile();
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
@@ -128,15 +148,20 @@ const Slideshow: React.FC = () => {
     if (filteredItems.length === 1) return;
 
     const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
-        setIsTransitioning(false);
-      }, 300); // Half of the CSS transition duration
+      if (isMobile) {
+        goToNext();
+      } else {
+        // Desktop: use fade transition
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
+          setIsTransitioning(false);
+        }, 300);
+      }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [filteredItems.length, currentIndex]);
+  }, [filteredItems.length, isMobile]);
 
   const handleCategoryClick = (category: string) => {
     if (currentFilter === category) {
@@ -167,42 +192,54 @@ const Slideshow: React.FC = () => {
     setTimeout(() => {
       setCurrentIndex(index);
       setIsTransitioning(false);
-    }, 300);
+    }, 400); // Match CSS transition duration
   };
 
   const goToPrevious = () => {
+    if (filteredItems.length <= 1) return;
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentIndex((prevIndex) => (prevIndex - 1 + filteredItems.length) % filteredItems.length);
       setIsTransitioning(false);
-    }, 300);
+    }, 400); // Match CSS transition duration
   };
 
   const goToNext = () => {
+    if (filteredItems.length <= 1) return;
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
       setIsTransitioning(false);
-    }, 300);
+    }, 400); // Match CSS transition duration
   };
 
-  // Touch event handlers for swipe functionality
+  // Touch event handlers for swipe functionality (mobile only)
   const onTouchStart = (e: React.TouchEvent) => {
+    if (!isMobile) return;
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
     setIsSwiping(false);
+    setSwipeOffset(0);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-    if (touchStart && Math.abs(e.targetTouches[0].clientX - touchStart) > 10) {
+    if (!isMobile || !touchStart) return;
+    
+    const currentTouch = e.targetTouches[0].clientX;
+    const diff = touchStart - currentTouch;
+    
+    setTouchEnd(currentTouch);
+    setSwipeOffset(diff);
+    
+    if (Math.abs(diff) > 10) {
       setIsSwiping(true);
     }
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) {
+    if (!isMobile || !touchStart || !touchEnd) {
       setIsSwiping(false);
+      setSwipeOffset(0);
       return;
     }
     
@@ -211,13 +248,15 @@ const Slideshow: React.FC = () => {
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe) {
-      goToNext();
-    }
-    if (isRightSwipe) {
-      goToPrevious();
+      // Swipe left (fingers move left) - go to next image
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
+    } else if (isRightSwipe) {
+      // Swipe right (fingers move right) - go to previous image
+      setCurrentIndex((prevIndex) => (prevIndex - 1 + filteredItems.length) % filteredItems.length);
     }
     
     setIsSwiping(false);
+    setSwipeOffset(0);
   };
 
   if (loading) {
@@ -252,26 +291,62 @@ const Slideshow: React.FC = () => {
           &#8249;
         </button>
         
-        <div className={`slideshow-slide ${isSwiping ? 'swiping' : ''}`}>
-          <img 
-            src={filteredItems[currentIndex]?.imageUrl} 
-            alt={filteredItems[currentIndex]?.title}
-            className={`slideshow-image ${isTransitioning ? 'fade-out' : 'fade-in'}`}
-          />
-          <div className="slideshow-overlay">
-            {filteredItems[currentIndex]?.category && (
-              <button 
-                className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
-                onClick={() => handleCategoryClick(filteredItems[currentIndex]?.category)}
-              >
-                {filteredItems[currentIndex]?.category}
-              </button>
-            )}
-            {filteredItems[currentIndex]?.description && (
-              <p className="slideshow-description">{filteredItems[currentIndex]?.description}</p>
-            )}
+        {isMobile ? (
+          // Mobile: Horizontal carousel
+          <div className="slideshow-carousel">
+            <div 
+              className={`slideshow-track ${isSwiping ? 'swiping' : ''} ${isTransitioning ? 'transitioning' : ''}`}
+              style={{
+                transform: `translateX(calc(-${currentIndex * 100}% - ${swipeOffset}px))`
+              }}
+            >
+              {filteredItems.map((item, index) => (
+                <div key={item.id} className="slideshow-slide">
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.title}
+                    className="slideshow-image"
+                  />
+                  <div className="slideshow-overlay">
+                    {item.category && (
+                      <button 
+                        className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
+                        onClick={() => handleCategoryClick(item.category)}
+                      >
+                        {item.category}
+                      </button>
+                    )}
+                    {item.description && (
+                      <p className="slideshow-description">{item.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          // Desktop: Fade transition
+          <div className={`slideshow-slide ${isSwiping ? 'swiping' : ''}`}>
+            <img 
+              src={filteredItems[currentIndex]?.imageUrl} 
+              alt={filteredItems[currentIndex]?.title}
+              className={`slideshow-image ${isTransitioning ? 'fade-out' : 'fade-in'}`}
+            />
+            <div className="slideshow-overlay">
+              {filteredItems[currentIndex]?.category && (
+                <button 
+                  className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
+                  onClick={() => handleCategoryClick(filteredItems[currentIndex]?.category)}
+                >
+                  {filteredItems[currentIndex]?.category}
+                </button>
+              )}
+              {filteredItems[currentIndex]?.description && (
+                <p className="slideshow-description">{filteredItems[currentIndex]?.description}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         <button className="slideshow-button slideshow-next" onClick={goToNext}>
           &#8250;
