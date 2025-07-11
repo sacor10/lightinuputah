@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from 'contentful';
 import './Slideshow.css';
 
@@ -48,11 +48,43 @@ const Slideshow: React.FC = () => {
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const slideshowRef = useRef<HTMLDivElement>(null);
+  
+  // Timer ref for auto-advance functionality
+  const autoAdvanceIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const isMobile = useIsMobile();
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
+
+  // Function to start the auto-advance timer
+  const startAutoAdvanceTimer = useCallback(() => {
+    // Clear any existing timer
+    if (autoAdvanceIntervalRef.current) {
+      clearInterval(autoAdvanceIntervalRef.current);
+    }
+
+    if (filteredItems.length <= 1) return;
+
+    autoAdvanceIntervalRef.current = setInterval(() => {
+      if (isMobile) {
+        // For mobile, directly update the index without calling goToNext to avoid infinite loop
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
+      } else {
+        // Desktop: use fade transition
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
+          setIsTransitioning(false);
+        }, 300);
+      }
+    }, 5000);
+  }, [filteredItems.length, isMobile]);
+
+  // Function to reset the auto-advance timer
+  const resetAutoAdvanceTimer = useCallback(() => {
+    startAutoAdvanceTimer();
+  }, [startAutoAdvanceTimer]);
 
   useEffect(() => {
     // Debug logging
@@ -144,24 +176,16 @@ const Slideshow: React.FC = () => {
   useEffect(() => {
     if (filteredItems.length === 0) return;
 
-    // Don't auto-advance if there's only one image in the filtered set
-    if (filteredItems.length === 1) return;
+    // Start the auto-advance timer
+    startAutoAdvanceTimer();
 
-    const interval = setInterval(() => {
-      if (isMobile) {
-        goToNext();
-      } else {
-        // Desktop: use fade transition
-        setIsTransitioning(true);
-        setTimeout(() => {
-          setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
-          setIsTransitioning(false);
-        }, 300);
+    // Cleanup function to clear the timer when component unmounts or dependencies change
+    return () => {
+      if (autoAdvanceIntervalRef.current) {
+        clearInterval(autoAdvanceIntervalRef.current);
       }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [filteredItems.length, isMobile]);
+    };
+  }, [filteredItems.length, isMobile, startAutoAdvanceTimer]);
 
   const handleCategoryClick = (category: string) => {
     if (currentFilter === category) {
@@ -172,6 +196,7 @@ const Slideshow: React.FC = () => {
         setCurrentFilter(null);
         setCurrentIndex(0);
         setIsTransitioning(false);
+        resetAutoAdvanceTimer(); // Reset timer after transition
       }, 300); // Half of the CSS transition duration
     } else {
       // Filter by the clicked category with transition
@@ -182,6 +207,7 @@ const Slideshow: React.FC = () => {
         setCurrentFilter(category);
         setCurrentIndex(0);
         setIsTransitioning(false);
+        resetAutoAdvanceTimer(); // Reset timer after transition
       }, 300); // Half of the CSS transition duration
     }
   };
@@ -192,6 +218,7 @@ const Slideshow: React.FC = () => {
     setTimeout(() => {
       setCurrentIndex(index);
       setIsTransitioning(false);
+      resetAutoAdvanceTimer(); // Reset timer after transition
     }, 400); // Match CSS transition duration
   };
 
@@ -201,6 +228,7 @@ const Slideshow: React.FC = () => {
     setTimeout(() => {
       setCurrentIndex((prevIndex) => (prevIndex - 1 + filteredItems.length) % filteredItems.length);
       setIsTransitioning(false);
+      resetAutoAdvanceTimer(); // Reset timer after transition
     }, 400); // Match CSS transition duration
   };
 
@@ -210,6 +238,7 @@ const Slideshow: React.FC = () => {
     setTimeout(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
       setIsTransitioning(false);
+      resetAutoAdvanceTimer(); // Reset timer after transition
     }, 400); // Match CSS transition duration
   };
 
@@ -250,9 +279,11 @@ const Slideshow: React.FC = () => {
     if (isLeftSwipe) {
       // Swipe left (fingers move left) - go to next image
       setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
+      resetAutoAdvanceTimer(); // Reset timer after swipe
     } else if (isRightSwipe) {
       // Swipe right (fingers move right) - go to previous image
       setCurrentIndex((prevIndex) => (prevIndex - 1 + filteredItems.length) % filteredItems.length);
+      resetAutoAdvanceTimer(); // Reset timer after swipe
     }
     
     setIsSwiping(false);
