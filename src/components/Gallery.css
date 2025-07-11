@@ -256,6 +256,12 @@
     transition: all 0.3s ease;
   }
   
+  .gallery-grid--center-last-row {
+    display: flex !important;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .gallery-container {

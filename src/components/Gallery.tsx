@@ -62,6 +62,29 @@ const Gallery: React.FC = () => {
   }>(null);
   const isMobile = useIsMobile();
 
+  // Helper to determine number of columns based on screen size
+  const getNumColumns = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth <= 768) {
+        return Math.floor((window.innerWidth - 32) / 250) || 1; // min 1 col
+      } else {
+        return Math.floor((window.innerWidth - 64) / 300) || 1; // min 1 col
+      }
+    }
+    return isMobile ? 1 : 2;
+  };
+
+  const [numColumns, setNumColumns] = useState(getNumColumns());
+
+  useEffect(() => {
+    const handleResize = () => {
+      setNumColumns(getNumColumns());
+    };
+    window.addEventListener('resize', handleResize);
+    setNumColumns(getNumColumns());
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
+
   useEffect(() => {
     // Debug logging
     console.log('Gallery component: Checking environment variables...');
@@ -191,6 +214,13 @@ const Gallery: React.FC = () => {
     setLoadingMore(false);
   };
 
+  // Calculate if last row is not full
+  const lastRowCount = displayedItems.length % numColumns;
+  const shouldCenterLastRow =
+    displayedItems.length > 0 &&
+    lastRowCount > 0 &&
+    lastRowCount < numColumns;
+
   return (
     <div className="gallery-container">
       <div className="gallery-header">
@@ -226,7 +256,7 @@ const Gallery: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="gallery-grid">
+          <div className={`gallery-grid${shouldCenterLastRow ? ' gallery-grid--center-last-row' : ''}`}>
             {displayedItems.map(item => (
               <div className="gallery-item" key={item.sys.id}>
                 <img
