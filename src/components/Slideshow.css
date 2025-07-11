@@ -211,18 +211,9 @@
     font-size: 0.9rem;
   }
   
+  /* Hide arrow buttons on mobile */
   .slideshow-button {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
-  
-  .slideshow-prev {
-    left: 10px;
-  }
-  
-  .slideshow-next {
-    right: 10px;
+    display: none;
   }
   
   .slideshow-overlay {
