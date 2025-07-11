@@ -56,6 +56,10 @@ const Gallery: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [itemsToShow, setItemsToShow] = useState(6);
+  const [fullscreenImage, setFullscreenImage] = useState<null | {
+    url: string;
+    title: string;
+  }>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -234,6 +238,13 @@ const Gallery: React.FC = () => {
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
+                  onClick={() => setFullscreenImage({
+                    url: item.fields.image.fields.file.url.startsWith('http')
+                      ? item.fields.image.fields.file.url
+                      : `https:${item.fields.image.fields.file.url}`,
+                    title: item.fields.title
+                  })}
+                  style={{ cursor: 'pointer' }}
                 />
                 <div className="gallery-overlay">
                   {item.fields.category && (
@@ -270,6 +281,61 @@ const Gallery: React.FC = () => {
             </div>
           )}
         </>
+      )}
+      {/* Fullscreen overlay */}
+      {fullscreenImage && (
+        <div
+          className="gallery-fullscreen-overlay"
+          onClick={() => setFullscreenImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <button
+            className="gallery-fullscreen-close"
+            onClick={e => {
+              e.stopPropagation();
+              setFullscreenImage(null);
+            }}
+            style={{
+              position: 'absolute',
+              top: 24,
+              left: 24,
+              background: 'rgba(0,0,0,0.7)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              fontSize: 24,
+              cursor: 'pointer',
+              zIndex: 1001,
+            }}
+            aria-label="Close fullscreen image"
+          >
+            ×
+          </button>
+          <img
+            src={fullscreenImage.url}
+            alt={fullscreenImage.title}
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              boxShadow: '0 0 32px 8px rgba(0,0,0,0.7)',
+              borderRadius: 8,
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
       )}
     </div>
   );
