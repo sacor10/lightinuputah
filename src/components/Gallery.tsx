@@ -30,6 +30,23 @@ const Spinner: React.FC = () => (
   </div>
 );
 
+// Hook to detect mobile devices (copied from Slideshow.tsx)
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  return isMobile;
+};
+
 const Gallery: React.FC = () => {
   const [items, setItems] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
@@ -39,6 +56,7 @@ const Gallery: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [itemsToShow, setItemsToShow] = useState(6);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Debug logging
@@ -117,7 +135,10 @@ const Gallery: React.FC = () => {
 
         setItems(roundRobinItems);
         setFiltered(roundRobinItems);
-        setDisplayedItems(roundRobinItems.slice(0, 6));
+        // Set initial number of items based on device
+        const initialCount = isMobile ? 3 : 6;
+        setDisplayedItems(roundRobinItems.slice(0, initialCount));
+        setItemsToShow(initialCount);
         setCategories(categories);
         setLoading(false);
         console.log('Gallery component: Gallery loaded successfully with round-robin ordering');
@@ -126,28 +147,29 @@ const Gallery: React.FC = () => {
         console.error('Gallery component: Error fetching from Contentful:', error);
         setLoading(false);
       });
-  }, []);
+  }, [isMobile]);
 
   const handleFilter = (category: string) => {
     // If clicking the same category that's already active, toggle to 'All'
+    const initialCount = isMobile ? 3 : 6;
     if (activeCategory === category) {
       setActiveCategory('All');
-      setItemsToShow(6); // Reset to show first 6 items when filtering
+      setItemsToShow(initialCount); // Reset to show first N items when filtering
       const newFiltered = items;
       setFiltered(newFiltered);
-      setDisplayedItems(newFiltered.slice(0, 6));
+      setDisplayedItems(newFiltered.slice(0, initialCount));
     } else {
       // Otherwise, set the new category
       setActiveCategory(category);
-      setItemsToShow(6); // Reset to show first 6 items when filtering
+      setItemsToShow(initialCount); // Reset to show first N items when filtering
       if (category === 'All') {
         const newFiltered = items;
         setFiltered(newFiltered);
-        setDisplayedItems(newFiltered.slice(0, 6));
+        setDisplayedItems(newFiltered.slice(0, initialCount));
       } else {
         const newFiltered = items.filter(item => item.fields.category === category);
         setFiltered(newFiltered);
-        setDisplayedItems(newFiltered.slice(0, 6));
+        setDisplayedItems(newFiltered.slice(0, initialCount));
       }
     }
   };
@@ -158,9 +180,10 @@ const Gallery: React.FC = () => {
     // Simulate a small delay to show the loading state and make the transition smoother
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    const nextItems = filtered.slice(0, itemsToShow + 6);
+    const increment = 6;
+    const nextItems = filtered.slice(0, itemsToShow + increment);
     setDisplayedItems(nextItems);
-    setItemsToShow(itemsToShow + 6);
+    setItemsToShow(itemsToShow + increment);
     setLoadingMore(false);
   };
 
