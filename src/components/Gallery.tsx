@@ -176,23 +176,25 @@ const Gallery: React.FC = () => {
       });
   }, [isMobile]);
 
+  // Add a debug log for activeCategory
+  useEffect(() => {
+    console.log('Active category:', activeCategory);
+  }, [activeCategory]);
+
   const handleFilter = (category: string) => {
-    // If clicking the same category that's already active, toggle to 'All'
     const initialCount = isMobile ? 3 : 6;
+    // If clicking the same category that's already active, toggle to 'All'
     if (activeCategory === category) {
       setActiveCategory('All');
-      setItemsToShow(initialCount); // Reset to show first N items when filtering
-      const newFiltered = items;
-      setFiltered(newFiltered);
-      setDisplayedItems(newFiltered.slice(0, initialCount));
+      setItemsToShow(initialCount);
+      setFiltered(items);
+      setDisplayedItems(items.slice(0, initialCount));
     } else {
-      // Otherwise, set the new category
       setActiveCategory(category);
-      setItemsToShow(initialCount); // Reset to show first N items when filtering
+      setItemsToShow(initialCount);
       if (category === 'All') {
-        const newFiltered = items;
-        setFiltered(newFiltered);
-        setDisplayedItems(newFiltered.slice(0, initialCount));
+        setFiltered(items);
+        setDisplayedItems(items.slice(0, initialCount));
       } else {
         const newFiltered = items.filter(item => item.fields.category === category);
         setFiltered(newFiltered);
@@ -227,7 +229,7 @@ const Gallery: React.FC = () => {
         <h2>Gallery</h2>
         <p>Check out our latest work!</p>
       </div>
-      <div className="category-filter">
+      <div className="category-filter" key={activeCategory}>
         <button
           className={`filter-btn${activeCategory === 'All' ? ' active' : ''}`}
           onClick={() => handleFilter('All')}
@@ -239,6 +241,7 @@ const Gallery: React.FC = () => {
             key={category}
             className={`filter-btn${activeCategory === category ? ' active' : ''}`}
             onClick={() => handleFilter(category)}
+            aria-pressed={activeCategory === category}
           >
             {category}
           </button>

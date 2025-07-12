@@ -54,6 +54,21 @@
     color: white;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4);
+    z-index: 1;
+  }
+
+  /* Defensive: If multiple .active, only the first is styled as active */
+  .category-filter .filter-btn.active ~ .filter-btn.active {
+    background: transparent !important;
+    color: #007bff !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* Accessibility: Add focus style for keyboard navigation */
+  .filter-btn:focus {
+    outline: 2px solid #0056b3;
+    outline-offset: 2px;
   }
   
   .filter-btn:active {
