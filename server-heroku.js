@@ -128,7 +128,7 @@ if (cluster.isMaster) {
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'", "https://www.google.com", "https://www.gstatic.com"],
                 imgSrc: ["'self'", "data:", "https:", "https://cdn.contentful.com"],
-                connectSrc: ["'self'", "https://cdn.contentful.com"],
+                connectSrc: ["'self'", "https://cdn.contentful.com", "https://www.google.com", "https://www.gstatic.com"],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
