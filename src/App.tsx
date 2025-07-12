@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import './App.css';
 import headerImage from './images/logo.png';
-import Gallery from './components/Gallery';
-import Slideshow from './components/Slideshow';
+import ImageOptimizer from './components/ImageOptimizer';
 import ContactForm from './components/ContactForm';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load heavy components
+const Gallery = React.lazy(() => import('./components/Gallery'));
+const Slideshow = React.lazy(() => import('./components/Slideshow'));
+
+// Loading fallback components
+const SlideshowSkeleton: React.FC = () => (
+  <div className="slideshow-skeleton">
+    <div className="skeleton-slide"></div>
+  </div>
+);
+
+const GallerySkeleton: React.FC = () => (
+  <div className="gallery-skeleton">
+    <div className="skeleton-title"></div>
+    <div className="skeleton-grid">
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <div key={i} className="skeleton-item"></div>
+      ))}
+    </div>
+  </div>
+);
 
 const App: React.FC = () => {
   return (
@@ -12,7 +33,13 @@ const App: React.FC = () => {
       <header className="header">
         <div className="header-flex">
           <div className="header-image-container">
-            <img src={headerImage} alt="LightinUpUtah" className="header-logo-image" />
+            <ImageOptimizer 
+              src={headerImage} 
+              alt="LightinUpUtah" 
+              className="header-logo-image"
+              loading="eager"
+              sizes="200px"
+            />
           </div>
           <nav className="header-nav">
             <div className="container">
@@ -27,7 +54,9 @@ const App: React.FC = () => {
       <section className="slideshow-section">
         <div className="container">
           <ErrorBoundary>
-            <Slideshow />
+            <Suspense fallback={<SlideshowSkeleton />}>
+              <Slideshow />
+            </Suspense>
           </ErrorBoundary>
         </div>
       </section>
@@ -70,7 +99,9 @@ const App: React.FC = () => {
 
       <section id="gallery" className="gallery">
         <ErrorBoundary>
-          <Gallery />
+          <Suspense fallback={<GallerySkeleton />}>
+            <Gallery />
+          </Suspense>
         </ErrorBoundary>
       </section>
 

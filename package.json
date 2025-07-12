@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@types/react-google-recaptcha": "^2.1.9",
+    "cross-env": "^7.0.3",
     "nth-check": "^2.1.1",
     "postcss": "^8.5.6",
     "react-devtools": "^6.1.5",
@@ -79,11 +80,19 @@
     "security:check": "npm audit --audit-level=moderate",
     "prebuild": "npm run security:check",
     "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
-    "build:analyze": "GENERATE_SOURCEMAP=false npm run build",
-    "build:prod": "GENERATE_SOURCEMAP=false npm run build",
-    "build:optimized": "GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false npm run build",
+    "build:analyze": "cross-env GENERATE_SOURCEMAP=false npm run build",
+    "build:prod": "cross-env GENERATE_SOURCEMAP=false npm run build",
+    "build:optimized": "cross-env GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false npm run build",
     "build:stats": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js --mode static --report",
-    "size": "npm run build && npx size-limit"
+    "size": "npm run build && npx size-limit",
+    "performance:audit": "npm run build && lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json",
+    "performance:report": "npm run build && lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html",
+    "performance:check": "npm run build && npx lighthouse http://localhost:3000 --only-categories=performance",
+    "bundle:analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js --mode static --report --report-filename=bundle-report.html",
+    "bundle:size": "npm run build && npx size-limit --why",
+    "cache:clear": "rm -rf build && rm -rf node_modules/.cache",
+    "optimize:images": "npm run build && npx imagemin public/images/* --out-dir=build/static/images",
+    "lighthouse:ci": "npm run build && npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-ci.json --chrome-flags='--headless --no-sandbox'"
   },
   "eslintConfig": {
     "extends": [
