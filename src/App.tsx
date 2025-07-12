@@ -33,12 +33,12 @@ const App: React.FC = () => {
       <header className="header">
         <div className="header-flex">
           <div className="header-image-container">
-            <ImageOptimizer 
+            <img 
               src={headerImage} 
               alt="LightinUpUtah" 
               className="header-logo-image"
               loading="eager"
-              sizes="200px"
+              style={{ display: 'block' }}
             />
           </div>
           <nav className="header-nav">

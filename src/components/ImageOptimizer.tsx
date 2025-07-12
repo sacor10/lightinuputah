@@ -80,7 +80,11 @@ const ImageOptimizer: React.FC<ImageOptimizerProps> = ({
     }
   };
 
-  const imageUrl = src.startsWith('http') ? src : `https:${src}`;
+  // Determine correct image URL
+  let imageUrl = src;
+  if (src.startsWith('//')) {
+    imageUrl = 'https:' + src;
+  }
   const srcSet = generateSrcSet(imageUrl);
 
   return (
