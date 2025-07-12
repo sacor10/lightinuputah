@@ -19,9 +19,19 @@ try {
     console.log('   Run "npm audit fix --force" locally to fix vulnerabilities');
   }
 
-  // Step 2: Build the application
+  // Step 2: Build the application with optimizations
   console.log('🏗️  Building application...');
-  execSync('npx react-scripts build', { stdio: 'inherit' });
+  const buildEnv = {
+    ...process.env,
+    GENERATE_SOURCEMAP: 'false',
+    INLINE_RUNTIME_CHUNK: 'false',
+    NODE_ENV: 'production'
+  };
+  
+  execSync('npx react-scripts build', { 
+    stdio: 'inherit',
+    env: buildEnv
+  });
   console.log('✅ Build completed successfully');
 
   // Step 3: Verify build output
@@ -29,6 +39,12 @@ try {
     console.log('✅ Build directory created');
     const buildFiles = fs.readdirSync('./build');
     console.log(`📁 Build contains ${buildFiles.length} items`);
+    
+    // Check bundle sizes
+    if (fs.existsSync('./build/static/js')) {
+      const jsFiles = fs.readdirSync('./build/static/js');
+      console.log(`📦 JavaScript bundles: ${jsFiles.length} files`);
+    }
   } else {
     throw new Error('Build directory not found');
   }

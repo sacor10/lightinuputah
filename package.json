@@ -33,6 +33,11 @@
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-dev-server": "^5.2.2"
   },
+  "overrides": {
+    "nth-check": "^2.1.1",
+    "postcss": "^8.4.31",
+    "webpack-dev-server": "^5.2.2"
+  },
   "size-limit": [
     {
       "path": "build/static/js/*.js",
@@ -73,10 +78,12 @@
     "security:fix": "npm audit fix",
     "security:fix-force": "npm audit fix --force",
     "security:update": "npm update",
-    "prebuild": "npm run security:audit",
+    "security:check": "npm audit --audit-level=moderate",
+    "prebuild": "npm run security:check",
     "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
     "build:analyze": "GENERATE_SOURCEMAP=false npm run build",
     "build:prod": "GENERATE_SOURCEMAP=false npm run build",
+    "build:optimized": "GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false npm run build",
     "build:stats": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js --mode static --report",
     "size": "npm run build && npx size-limit"
   },

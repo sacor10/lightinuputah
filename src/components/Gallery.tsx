@@ -23,6 +23,14 @@ interface GalleryItemFields {
   description?: string;
 }
 
+// Type for gallery items
+type GalleryItem = {
+  fields: GalleryItemFields;
+  sys: {
+    id: string;
+  };
+};
+
 // Spinner component for loading states
 const Spinner: React.FC = () => (
   <div className="spinner">
@@ -48,9 +56,9 @@ const useIsMobile = () => {
 };
 
 const Gallery: React.FC = () => {
-  const [items, setItems] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
-  const [displayedItems, setDisplayedItems] = useState<any[]>([]);
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [filtered, setFiltered] = useState<GalleryItem[]>([]);
+  const [displayedItems, setDisplayedItems] = useState<GalleryItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [loading, setLoading] = useState(true);
@@ -63,7 +71,7 @@ const Gallery: React.FC = () => {
   const isMobile = useIsMobile();
 
   // Helper to determine number of columns based on screen size
-  const getNumColumns = () => {
+  const getNumColumns = React.useCallback(() => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth <= 768) {
         return Math.floor((window.innerWidth - 32) / 250) || 1; // min 1 col
@@ -72,7 +80,7 @@ const Gallery: React.FC = () => {
       }
     }
     return isMobile ? 1 : 2;
-  };
+  }, [isMobile]);
 
   const [numColumns, setNumColumns] = useState(getNumColumns());
 
@@ -83,7 +91,7 @@ const Gallery: React.FC = () => {
     window.addEventListener('resize', handleResize);
     setNumColumns(getNumColumns());
     return () => window.removeEventListener('resize', handleResize);
-  }, [isMobile]);
+  }, [isMobile, getNumColumns]);
 
   useEffect(() => {
     // Debug logging
