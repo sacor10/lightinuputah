@@ -1,13 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { createClient } from 'contentful';
+import { useContentfulData } from '../hooks/useContentfulData';
+import ContentfulService from '../services/contentfulService';
 import './Slideshow.css';
-
-// Contentful configuration from environment variables
-const SPACE_ID = process.env.REACT_APP_CONTENTFUL_SPACE_ID;
-const ACCESS_TOKEN = process.env.REACT_APP_CONTENTFUL_ACCESS_TOKEN;
-
-// The Contentful content type ID for your gallery items
-const CONTENT_TYPE = 'galleryItem';
 
 interface SlideshowItem {
   id: string;
@@ -35,10 +29,9 @@ const useIsMobile = () => {
 };
 
 const Slideshow: React.FC = () => {
-  const [items, setItems] = useState<SlideshowItem[]>([]);
+  const { items: allItems, loading, error } = useContentfulData();
   const [filteredItems, setFilteredItems] = useState<SlideshowItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<string | null>(null);
   
@@ -87,91 +80,16 @@ const Slideshow: React.FC = () => {
   }, [startAutoAdvanceTimer]);
 
   useEffect(() => {
-    // Debug logging
-    console.log('Slideshow component: Checking environment variables...');
-    console.log('SPACE_ID:', SPACE_ID ? 'Set' : 'Not set');
-    console.log('ACCESS_TOKEN:', ACCESS_TOKEN ? 'Set' : 'Not set');
-    
-    // Check if environment variables are set
-    if (!SPACE_ID || !ACCESS_TOKEN) {
-      console.error('Contentful environment variables are not set. Please check your .env file.');
-      console.error('SPACE_ID:', SPACE_ID);
-      console.error('ACCESS_TOKEN:', ACCESS_TOKEN);
-      setLoading(false);
-      return;
-    }
-
-    console.log('Slideshow component: Creating Contentful client...');
-    const client = createClient({
-      space: SPACE_ID,
-      accessToken: ACCESS_TOKEN,
-    });
-
-    console.log('Slideshow component: Fetching entries from Contentful...');
-    client.getEntries({ 
-      content_type: CONTENT_TYPE,
-      limit: 100 // Get more items to ensure we have enough for the sorting logic
-    })
-      .then((response) => {
-        const allItems: SlideshowItem[] = response.items.map((item: any) => ({
-          id: item.sys.id,
-          title: item.fields.title,
-          imageUrl: item.fields.image.fields.file.url.startsWith('http')
-            ? item.fields.image.fields.file.url
-            : `https:${item.fields.image.fields.file.url}`,
-          category: item.fields.category,
-          description: item.fields.description
-        }));
-
-        // Sort all items alphabetically by title
-        allItems.sort((a, b) => a.title.localeCompare(b.title));
-
-        // Get unique categories sorted A-Z
-        const categories = Array.from(new Set(allItems.map(item => item.category))).sort();
-
-        // Group items by category
-        const itemsByCategory = new Map<string, SlideshowItem[]>();
-        allItems.forEach(item => {
-          if (!itemsByCategory.has(item.category)) {
-            itemsByCategory.set(item.category, []);
-          }
-          itemsByCategory.get(item.category)!.push(item);
-        });
-
-        // Create round-robin order: one from each category in sequence
-        const slideshowItems: SlideshowItem[] = [];
-        let maxItemsPerCategory = 0;
-        
-        // Find the maximum number of items in any category
-        categories.forEach(category => {
-          const categoryItems = itemsByCategory.get(category);
-          if (categoryItems) {
-            maxItemsPerCategory = Math.max(maxItemsPerCategory, categoryItems.length);
-          }
-        });
-
-        // Build round-robin order
-        for (let round = 0; round < maxItemsPerCategory && slideshowItems.length < 10; round++) {
-          categories.forEach(category => {
-            if (slideshowItems.length >= 10) return; // Stop if we reach 10 items
-            
-            const categoryItems = itemsByCategory.get(category);
-            if (categoryItems && categoryItems[round]) {
-              slideshowItems.push(categoryItems[round]);
-            }
-          });
-        }
-
-        setItems(slideshowItems);
-        setFilteredItems(slideshowItems);
-        setLoading(false);
+    if (allItems.length > 0) {
+      const service = ContentfulService.getInstance();
+      const slideshowItems = service.createRoundRobinOrder(allItems, 10);
+      setFilteredItems(slideshowItems);
+      
+      if (process.env.NODE_ENV === 'development') {
         console.log('Slideshow component: Slideshow loaded successfully with', slideshowItems.length, 'items');
-      })
-      .catch((error) => {
-        console.error('Slideshow component: Error fetching from Contentful:', error);
-        setLoading(false);
-      });
-  }, []);
+      }
+    }
+  }, [allItems]);
 
   useEffect(() => {
     if (filteredItems.length === 0) return;
@@ -192,7 +110,9 @@ const Slideshow: React.FC = () => {
       // If clicking the same category, show all images with transition
       setIsTransitioning(true);
       setTimeout(() => {
-        setFilteredItems(items);
+        const service = ContentfulService.getInstance();
+        const slideshowItems = service.createRoundRobinOrder(allItems, 10);
+        setFilteredItems(slideshowItems);
         setCurrentFilter(null);
         setCurrentIndex(0);
         setIsTransitioning(false);
@@ -202,7 +122,7 @@ const Slideshow: React.FC = () => {
       // Filter by the clicked category with transition
       setIsTransitioning(true);
       setTimeout(() => {
-        const filtered = items.filter(item => item.category === category);
+        const filtered = allItems.filter((item: SlideshowItem) => item.category === category);
         setFilteredItems(filtered);
         setCurrentFilter(category);
         setCurrentIndex(0);

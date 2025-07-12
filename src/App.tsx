@@ -4,6 +4,7 @@ import headerImage from './images/logo.png';
 import Gallery from './components/Gallery';
 import Slideshow from './components/Slideshow';
 import ContactForm from './components/ContactForm';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const App: React.FC = () => {
   return (
@@ -25,7 +26,9 @@ const App: React.FC = () => {
 
       <section className="slideshow-section">
         <div className="container">
-          <Slideshow />
+          <ErrorBoundary>
+            <Slideshow />
+          </ErrorBoundary>
         </div>
       </section>
 
@@ -66,7 +69,9 @@ const App: React.FC = () => {
       </section>
 
       <section id="gallery" className="gallery">
-        <Gallery />
+        <ErrorBoundary>
+          <Gallery />
+        </ErrorBoundary>
       </section>
 
       <section id="contact" className="contact">
