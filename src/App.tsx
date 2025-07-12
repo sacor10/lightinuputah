@@ -35,7 +35,7 @@ const App: React.FC = () => {
           <p className="hero-subtitle">Transform your vehicle with custom LED lighting solutions in Salt Lake City, Utah</p>
           <div className="hero-info">
             <h3>Hi, I'm Braden!</h3>
-            <p>Professional lighting installer specializing in halos, light bars, underglow, and everything in between.</p>
+            <p>Professional lighting installer specializing in full LED systems, headlights, interior lighting, underglow, and everything in between.</p>
             <a href="#contact" className="cta-button">Get a Quote</a>
           </div>
         </div>
@@ -73,14 +73,16 @@ const App: React.FC = () => {
         <div className="container">
           <h2>Get In Touch</h2>
           <div className="contact-content">
-          <div className="contact-info">
-              <h3>Contact Information</h3>
-            <p><strong>Location:</strong> Salt Lake City, Utah</p>
-              <p><strong>Email:</strong> info@lightinuputah.com</p>
-            <p><strong>Instagram:</strong> <a href="https://www.instagram.com/lightinuputah/" target="_blank" rel="noopener noreferrer">@lightinuputah</a></p>
-            <p><strong>Ready to light up your ride?</strong> <a href="https://www.instagram.com/direct/t/104833807708713/" target="_blank" rel="noopener noreferrer">Hit me up on Instagram! →</a></p>
+            <div className="contact-form-section">
+              <ContactForm />
             </div>
-            <ContactForm />
+            <div className="contact-info">
+              <h3>Contact Information</h3>
+              <p><strong>Location:</strong> Salt Lake City, Utah</p>
+              <p><strong>Email:</strong> info@lightinuputah.com</p>
+              <p><strong>Instagram:</strong> <a href="https://www.instagram.com/lightinuputah/" target="_blank" rel="noopener noreferrer">@lightinuputah</a></p>
+              <p><a href="https://www.instagram.com/direct/t/104833807708713/" target="_blank" rel="noopener noreferrer">Hit me up on Instagram! →</a></p>
+            </div>
           </div>
         </div>
       </section>
