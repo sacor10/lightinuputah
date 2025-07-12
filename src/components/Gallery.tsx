@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useContentfulData } from '../hooks/useContentfulData';
 import ContentfulService from '../services/contentfulService';
 import { convertToGalleryItems, GalleryItem } from '../utils/galleryUtils';
@@ -44,6 +44,13 @@ const Gallery: React.FC = () => {
     title: string;
   }>(null);
   const isMobile = useIsMobile();
+  
+  // Refs for touch gesture detection
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   // Helper to determine number of columns based on screen size
   const getNumColumns = React.useCallback(() => {
@@ -92,6 +99,69 @@ const Gallery: React.FC = () => {
       console.log('Active category:', activeCategory);
     }
   }, [activeCategory]);
+
+  // Handle mobile back gesture to close fullscreen image
+  useEffect(() => {
+    if (!fullscreenImage || !isMobile) return;
+
+    const handleTouchStart = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      touchStartX.current = touchEvent.touches[0].clientX;
+      touchStartY.current = touchEvent.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: Event) => {
+      if (touchStartX.current === null || touchStartY.current === null) return;
+      
+      const touchEvent = e as TouchEvent;
+      touchEndX.current = touchEvent.touches[0].clientX;
+      touchEndY.current = touchEvent.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: Event) => {
+      if (touchStartX.current === null || touchStartY.current === null || 
+          touchEndX.current === null || touchEndY.current === null) return;
+
+      const touchEvent = e as TouchEvent;
+      const deltaX = touchEndX.current - touchStartX.current;
+      const deltaY = touchEndY.current - touchStartY.current;
+      
+      // Check if it's a horizontal swipe (more horizontal than vertical)
+      const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+      
+      // Check if it's a right-to-left swipe (back gesture) - more sensitive threshold
+      const isBackGesture = deltaX > 30 && isHorizontalSwipe && Math.abs(deltaX) > 20;
+      
+      if (isBackGesture) {
+        touchEvent.preventDefault();
+        setFullscreenImage(null);
+      }
+      
+      // Reset touch coordinates
+      touchStartX.current = null;
+      touchStartY.current = null;
+      touchEndX.current = null;
+      touchEndY.current = null;
+    };
+
+    // Add event listeners to the fullscreen overlay with a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      if (overlayRef.current) {
+        overlayRef.current.addEventListener('touchstart', handleTouchStart, { passive: false });
+        overlayRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
+        overlayRef.current.addEventListener('touchend', handleTouchEnd, { passive: false });
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (overlayRef.current) {
+        overlayRef.current.removeEventListener('touchstart', handleTouchStart);
+        overlayRef.current.removeEventListener('touchmove', handleTouchMove);
+        overlayRef.current.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [fullscreenImage, isMobile]);
 
   const handleFilter = (category: string) => {
     const initialCount = isMobile ? 3 : 6;
@@ -237,6 +307,7 @@ const Gallery: React.FC = () => {
       {/* Fullscreen overlay */}
       {fullscreenImage && (
         <div
+          ref={overlayRef}
           className="gallery-fullscreen-overlay"
           onClick={() => setFullscreenImage(null)}
           style={{

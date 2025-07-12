@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
 import './App.css';
 import headerImage from './images/logo.png';
-import ImageOptimizer from './components/ImageOptimizer';
 import ContactForm from './components/ContactForm';
 import ErrorBoundary from './components/ErrorBoundary';
 
