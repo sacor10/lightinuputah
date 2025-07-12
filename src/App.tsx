@@ -3,6 +3,7 @@ import './App.css';
 import headerImage from './images/logo.png';
 import Gallery from './components/Gallery';
 import Slideshow from './components/Slideshow';
+import ContactForm from './components/ContactForm';
 
 const App: React.FC = () => {
   return (
@@ -71,11 +72,15 @@ const App: React.FC = () => {
       <section id="contact" className="contact">
         <div className="container">
           <h2>Get In Touch</h2>
+          <div className="contact-content">
           <div className="contact-info">
+              <h3>Contact Information</h3>
             <p><strong>Location:</strong> Salt Lake City, Utah</p>
-            <p><strong>Email:</strong> lightinuputah@gmail.com</p>
+              <p><strong>Email:</strong> info@lightinuputah.com</p>
             <p><strong>Instagram:</strong> <a href="https://www.instagram.com/lightinuputah/" target="_blank" rel="noopener noreferrer">@lightinuputah</a></p>
             <p><strong>Ready to light up your ride?</strong> <a href="https://www.instagram.com/direct/t/104833807708713/" target="_blank" rel="noopener noreferrer">Hit me up on Instagram! →</a></p>
+            </div>
+            <ContactForm />
           </div>
         </div>
       </section>
