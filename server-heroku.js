@@ -126,13 +126,13 @@ if (cluster.isMaster) {
             directives: {
                 defaultSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
-                scriptSrc: ["'self'"],
+                scriptSrc: ["'self'", "https://www.google.com", "https://www.gstatic.com"],
                 imgSrc: ["'self'", "data:", "https:", "https://cdn.contentful.com"],
                 connectSrc: ["'self'", "https://cdn.contentful.com"],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
-                frameSrc: ["'none'"],
+                frameSrc: ["'self'", "https://www.google.com", "https://www.gstatic.com"],
             },
         },
         hsts: {
