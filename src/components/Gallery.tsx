@@ -33,7 +33,7 @@ const useIsMobile = () => {
 };
 
 const Gallery: React.FC = () => {
-  const { items: allItems, categories, loading, error } = useContentfulData();
+  const { items: allItems, categories, loading } = useContentfulData();
   const [filtered, setFiltered] = useState<GalleryItem[]>([]);
   const [displayedItems, setDisplayedItems] = useState<GalleryItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -146,19 +146,22 @@ const Gallery: React.FC = () => {
 
     // Add event listeners to the fullscreen overlay with a small delay to ensure DOM is ready
     const timeoutId = setTimeout(() => {
-      if (overlayRef.current) {
-        overlayRef.current.addEventListener('touchstart', handleTouchStart, { passive: false });
-        overlayRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
-        overlayRef.current.addEventListener('touchend', handleTouchEnd, { passive: false });
+      const overlay = overlayRef.current;
+      if (overlay) {
+        overlay.addEventListener('touchstart', handleTouchStart, { passive: false });
+        overlay.addEventListener('touchmove', handleTouchMove, { passive: false });
+        overlay.addEventListener('touchend', handleTouchEnd, { passive: false });
       }
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
-      if (overlayRef.current) {
-        overlayRef.current.removeEventListener('touchstart', handleTouchStart);
-        overlayRef.current.removeEventListener('touchmove', handleTouchMove);
-        overlayRef.current.removeEventListener('touchend', handleTouchEnd);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const overlay = overlayRef.current;
+      if (overlay) {
+        overlay.removeEventListener('touchstart', handleTouchStart);
+        overlay.removeEventListener('touchmove', handleTouchMove);
+        overlay.removeEventListener('touchend', handleTouchEnd);
       }
     };
   }, [fullscreenImage, isMobile]);

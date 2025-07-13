@@ -29,7 +29,7 @@ const useIsMobile = () => {
 };
 
 const Slideshow: React.FC = () => {
-  const { items: allItems, loading, error } = useContentfulData();
+  const { items: allItems, loading } = useContentfulData();
   const [filteredItems, setFilteredItems] = useState<SlideshowItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
