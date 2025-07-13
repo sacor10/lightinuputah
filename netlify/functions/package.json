@@ -1,0 +1,12 @@
+{
+  "name": "netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for Lightin Up Utah",
+  "main": "index.js",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

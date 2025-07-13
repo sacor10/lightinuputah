@@ -1,1 +1,1 @@
-web: node server-with-contact.js 
+web: node server-static.js 

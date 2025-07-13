@@ -134,7 +134,8 @@ const ContactForm: React.FC = () => {
     setSubmitStatus('idle');
 
     try {
-      const response = await fetch('/api/contact', {
+      // Use Netlify Function endpoint
+      const response = await fetch('/.netlify/functions/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
