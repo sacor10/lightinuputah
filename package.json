@@ -52,13 +52,20 @@
     "dev-static": "npm run build && npm run serve-static",
     "deploy": "node deploy.js",
     "test:netlify": "node test-netlify-function.js",
-    "test:contact": "node test-contact-function.js"
+    "test:contact": "node test-contact-function.js",
+    "type-check": "tsc --noEmit",
+    "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "size": "npm run build && npx size-limit"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-inferrable-types": "error"
+    }
   },
   "engines": {
     "node": "22.x",

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+
 import { useContentfulData } from '../hooks/useContentfulData';
 import ContentfulService from '../services/contentfulService';
 import './Slideshow.css';
@@ -251,7 +252,7 @@ const Slideshow: React.FC = () => {
                 transform: `translateX(calc(-${currentIndex * 100}% - ${swipeOffset}px))`
               }}
             >
-              {filteredItems.map((item, index) => (
+              {filteredItems.map((item, _index) => (
                 <div key={item.id} className="slideshow-slide">
                   <img 
                     src={item.imageUrl} 

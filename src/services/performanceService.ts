@@ -34,7 +34,7 @@ class PerformanceService {
   }
 
   // Cache management
-  public setCache<T>(key: string, data: T, ttl: number = 300000): void {
+  public setCache<T>(key: string, data: T, ttl = 300000): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -135,7 +135,7 @@ class PerformanceService {
   }
 
   // Image optimization helpers
-  public generateImageUrl(imageUrl: string, width: number, quality: number = 80): string {
+  public generateImageUrl(imageUrl: string, width: number, quality = 80): string {
     if (!imageUrl) return '';
     
     const baseUrl = imageUrl.split('?')[0];

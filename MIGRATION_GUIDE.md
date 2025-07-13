@@ -1,144 +1,114 @@
-# Migration Guide: Heroku Static + Netlify Functions
+# Migration Guide: Netlify Static + Netlify Functions
 
-This guide walks you through migrating from Heroku running `server-with-contact.js` to using Heroku as a static site with Netlify handling the contact form functionality.
+This guide walks you through deploying your React app to Netlify with Netlify Functions handling the contact form functionality.
 
 ## Architecture Overview
 
 **Before:**
-- Heroku runs Express server with `/api/contact` endpoint
-- Single platform handles both static files and API
+- Express server with `/api/contact` endpoint
+- Single server handling both static files and API
 
 **After:**
-- Heroku serves static files only
-- Netlify Functions handle contact form submissions
-- Separation of concerns and better scalability
+- Netlify serves static files only
+- Netlify Functions handle contact form processing
+- Better separation of concerns and cost optimization
 
 ## Migration Steps
 
-### 1. Set Up Netlify
+### 1. Update Contact Form Configuration
 
-1. **Create Netlify Account**
-   - Sign up at [netlify.com](https://www.netlify.com)
-   - Create a new site
+The contact form now uses Netlify Functions instead of a server endpoint:
 
-2. **Connect Repository**
-   - Connect your GitHub repository to Netlify
-   - Set build command: `npm run build`
-   - Set publish directory: `build`
+```typescript
+// In ContactForm.tsx
+const NETLIFY_FUNCTIONS_URL = process.env.REACT_APP_NETLIFY_FUNCTIONS_URL || '/.netlify/functions';
+const contactEndpoint = `${NETLIFY_FUNCTIONS_URL}/contact`;
+```
 
-3. **Configure Environment Variables**
-   - Go to Site Settings > Environment Variables
-   - Add the following variables:
-     - `SENDGRID_API_KEY`: Your SendGrid API key
-     - `RECAPTCHA_SECRET_KEY`: Your reCAPTCHA secret key
-     - `REACT_APP_RECAPTCHA_SITE_KEY`: Your reCAPTCHA site key
+### 2. Update Netlify Configuration
 
-### 2. Update Heroku Configuration
+Ensure your `netlify.toml` is properly configured:
 
-1. **Deploy Updated Code**
-   - The `Procfile` now points to `server-static.js`
-   - This server only serves static files
+```toml
+[build]
+  publish = "build"
+  functions = "netlify/functions"
 
-2. **Remove Server Dependencies (Optional)**
-   - You can remove these from `package.json` if not needed elsewhere:
-     - `@sendgrid/mail`
-     - `cors`
-     - `dotenv`
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
-### 3. Test the Setup
+[functions]
+  node_bundler = "esbuild"
+```
 
-1. **Test Netlify Function Locally**
+### 3. Environment Variables
+
+Update your environment variables:
+
+```bash
+# Remove Heroku-specific variables
+# REACT_APP_HEROKU_APP_NAME
+
+# Add Netlify-specific variables
+REACT_APP_NETLIFY_SITE_ID=your-site-id
+REACT_APP_NETLIFY_FUNCTIONS_URL=https://your-site.netlify.app/.netlify/functions
+```
+
+## Benefits of Migration
+
+- **Cost Optimization**: Netlify static hosting is more cost-effective
+- **Performance**: CDN distribution for static assets
+- **Scalability**: Automatic scaling for functions
+- **Maintenance**: Less server management overhead
+
+## Testing
+
+1. **Local Testing**:
    ```bash
-   npm install -g netlify-cli
-   netlify dev
+   npm run test:netlify
+   npm run test:contact
    ```
 
-2. **Test Contact Form**
-   - Submit a test message through the contact form
-   - Verify emails are sent correctly
-   - Check Netlify function logs
-
-### 4. Update DNS (If Needed)
-
-If you want to use a custom domain:
-1. Configure domain in Netlify
-2. Update DNS records to point to Netlify
-3. Set up redirects if needed
-
-## File Changes Summary
-
-### New Files Created
-- `netlify/functions/contact.js` - Contact form handler
-- `netlify/functions/package.json` - Function dependencies
-- `netlify.toml` - Netlify configuration
-- `server-static.js` - Static file server for Heroku
-- `NETLIFY_SETUP.md` - Netlify setup documentation
-- `MIGRATION_GUIDE.md` - This guide
-
-### Modified Files
-- `src/components/ContactForm.tsx` - Updated to use Netlify function
-- `package.json` - Added new scripts
-- `Procfile` - Updated to use static server
-
-## Benefits of This Architecture
-
-1. **Cost Optimization**
-   - Netlify Functions are pay-per-use
-   - Heroku static hosting is more cost-effective
-
-2. **Performance**
-   - Static files served from CDN
-   - Better caching and faster loading
-
-3. **Scalability**
-   - Functions auto-scale based on demand
-   - No server management required
-
-4. **Maintenance**
-   - Less server-side code to maintain
-   - Automatic deployments from Git
+2. **Production Testing**:
+   - Deploy to Netlify
+   - Test contact form functionality
+   - Verify CORS headers work correctly
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **CORS Errors**
-   - Ensure Netlify function includes proper CORS headers
-   - Check that your Heroku domain is allowed
+1. **CORS Errors**:
+   - Check that your Netlify domain is allowed
+   - Verify function URL is correct
 
-2. **Environment Variables**
-   - Verify all variables are set in Netlify dashboard
-   - Check that variable names match exactly
+2. **Function Not Found**:
+   - Ensure `netlify/functions/contact.js` exists
+   - Check `netlify.toml` configuration
 
-3. **Function Not Found**
-   - Ensure `netlify.toml` is configured correctly
-   - Check that function is in the right directory
+3. **Environment Variables**:
+   - Verify all required variables are set in Netlify dashboard
+   - Check variable naming (REACT_APP_ prefix for client-side)
 
-4. **Email Not Sending**
-   - Verify SendGrid API key is correct
-   - Check Netlify function logs for errors
+### Debugging
 
-### Monitoring
+1. **Netlify Function Logs**:
+   ```bash
+   netlify functions:logs
+   ```
 
-1. **Netlify Function Logs**
-   - Available in Netlify dashboard
-   - Monitor for errors and performance
+2. **Build Logs**:
+   - Check Netlify dashboard for build errors
+   - Verify build output directory
 
-2. **Heroku Logs**
-   - Check for static file serving issues
-   - Monitor performance metrics
+3. **Rollback Strategy**:
+   - Keep previous deployment as backup
+   - Use Netlify's rollback feature if needed
 
-## Rollback Plan
+## Resources
 
-If you need to rollback:
-1. Revert `Procfile` to use `server-with-contact.js`
-2. Revert `ContactForm.tsx` to use `/api/contact`
-3. Deploy the old version to Heroku
-
-## Support
-
-For issues with:
-- **Netlify**: Check Netlify documentation and community
-- **Heroku**: Check Heroku documentation
-- **SendGrid**: Check SendGrid support
-- **reCAPTCHA**: Check Google reCAPTCHA documentation 
+- **Netlify**: Check Netlify documentation
+- **Functions**: Netlify Functions documentation
+- **Deployment**: Netlify deployment guides 

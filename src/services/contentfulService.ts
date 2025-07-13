@@ -115,7 +115,7 @@ class ContentfulService {
     return Array.from(new Set(items.map(item => item.category))).sort();
   }
 
-  public createRoundRobinOrder(items: ProcessedItem[], maxItems: number = Infinity): ProcessedItem[] {
+  public createRoundRobinOrder(items: ProcessedItem[], maxItems = Infinity): ProcessedItem[] {
     const categories = this.getCategories(items);
     
     // Group items by category

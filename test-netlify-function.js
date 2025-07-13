@@ -82,7 +82,7 @@ async function runTests() {
   console.log('1. Set up environment variables in Netlify dashboard');
   console.log('2. Deploy to Netlify');
   console.log('3. Test with real reCAPTCHA token');
-  console.log('4. Deploy updated code to Heroku');
+  console.log('4. Deploy updated code to Netlify');
 }
 
 runTests(); 

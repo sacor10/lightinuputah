@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+
 import ContentfulService, { ProcessedItem } from '../services/contentfulService';
 
 interface UseContentfulDataReturn {

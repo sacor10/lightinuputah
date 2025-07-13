@@ -51,7 +51,7 @@ The contact form function is available at: `/.netlify/functions/contact`
 
 ## CORS Configuration
 
-The function includes CORS headers to allow cross-origin requests from your Heroku domain.
+The function includes CORS headers to allow cross-origin requests from your Netlify domain.
 
 ## Error Handling
 

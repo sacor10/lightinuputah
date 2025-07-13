@@ -1,8 +1,9 @@
 import React, { Suspense } from 'react';
+
 import './App.css';
-import headerImage from './images/logo.png';
 import ContactForm from './components/ContactForm';
 import ErrorBoundary from './components/ErrorBoundary';
+import headerImage from './images/logo.png';
 
 // Lazy load heavy components
 const Gallery = React.lazy(() => import('./components/Gallery'));
