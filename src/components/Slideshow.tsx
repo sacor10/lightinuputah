@@ -2,32 +2,12 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 import { useContentfulData } from '../hooks/useContentfulData';
 import ContentfulService from '../services/contentfulService';
+import { logger } from '../utils/logger';
+import { SLIDESHOW_CONFIG } from '../constants';
+import { SlideshowItem } from '../types';
 import './Slideshow.css';
 
-interface SlideshowItem {
-  id: string;
-  title: string;
-  imageUrl: string;
-  category: string;
-  description?: string;
-}
-
-// Hook to detect mobile devices
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
-
-  return isMobile;
-};
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const Slideshow: React.FC = () => {
   const { items: allItems, loading } = useContentfulData();
@@ -49,7 +29,7 @@ const Slideshow: React.FC = () => {
   const isMobile = useIsMobile();
 
   // Minimum swipe distance (in px)
-  const minSwipeDistance = 50;
+  const minSwipeDistance = SLIDESHOW_CONFIG.MIN_SWIPE_DISTANCE;
 
   // Function to start the auto-advance timer
   const startAutoAdvanceTimer = useCallback(() => {
@@ -72,7 +52,7 @@ const Slideshow: React.FC = () => {
           setIsTransitioning(false);
         }, 300);
       }
-    }, 5000);
+    }, SLIDESHOW_CONFIG.AUTO_ADVANCE_INTERVAL);
   }, [filteredItems.length, isMobile]);
 
   // Function to reset the auto-advance timer
@@ -83,12 +63,10 @@ const Slideshow: React.FC = () => {
   useEffect(() => {
     if (allItems.length > 0) {
       const service = ContentfulService.getInstance();
-      const slideshowItems = service.createRoundRobinOrder(allItems, 10);
+      const slideshowItems = service.createRoundRobinOrder(allItems, SLIDESHOW_CONFIG.MAX_ITEMS);
       setFilteredItems(slideshowItems);
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Slideshow component: Slideshow loaded successfully with', slideshowItems.length, 'items');
-      }
+      logger.log('Slideshow component: Slideshow loaded successfully with', slideshowItems.length, 'items');
     }
   }, [allItems]);
 
@@ -112,13 +90,13 @@ const Slideshow: React.FC = () => {
       setIsTransitioning(true);
       setTimeout(() => {
         const service = ContentfulService.getInstance();
-        const slideshowItems = service.createRoundRobinOrder(allItems, 10);
+        const slideshowItems = service.createRoundRobinOrder(allItems, SLIDESHOW_CONFIG.MAX_ITEMS);
         setFilteredItems(slideshowItems);
         setCurrentFilter(null);
         setCurrentIndex(0);
         setIsTransitioning(false);
         resetAutoAdvanceTimer(); // Reset timer after transition
-      }, 300); // Half of the CSS transition duration
+      }, SLIDESHOW_CONFIG.TRANSITION_DURATION); // Half of the CSS transition duration
     } else {
       // Filter by the clicked category with transition
       setIsTransitioning(true);
@@ -129,7 +107,7 @@ const Slideshow: React.FC = () => {
         setCurrentIndex(0);
         setIsTransitioning(false);
         resetAutoAdvanceTimer(); // Reset timer after transition
-      }, 300); // Half of the CSS transition duration
+      }, SLIDESHOW_CONFIG.TRANSITION_DURATION); // Half of the CSS transition duration
     }
   };
 
@@ -140,7 +118,7 @@ const Slideshow: React.FC = () => {
       setCurrentIndex(index);
       setIsTransitioning(false);
       resetAutoAdvanceTimer(); // Reset timer after transition
-    }, 400); // Match CSS transition duration
+    }, SLIDESHOW_CONFIG.TRANSITION_DURATION * 1.33); // Match CSS transition duration
   };
 
   const goToPrevious = () => {
@@ -150,7 +128,7 @@ const Slideshow: React.FC = () => {
       setCurrentIndex((prevIndex) => (prevIndex - 1 + filteredItems.length) % filteredItems.length);
       setIsTransitioning(false);
       resetAutoAdvanceTimer(); // Reset timer after transition
-    }, 400); // Match CSS transition duration
+    }, SLIDESHOW_CONFIG.TRANSITION_DURATION * 1.33); // Match CSS transition duration
   };
 
   const goToNext = () => {
@@ -160,7 +138,7 @@ const Slideshow: React.FC = () => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
       setIsTransitioning(false);
       resetAutoAdvanceTimer(); // Reset timer after transition
-    }, 400); // Match CSS transition duration
+    }, SLIDESHOW_CONFIG.TRANSITION_DURATION * 1.33); // Match CSS transition duration
   };
 
   // Touch event handlers for swipe functionality (mobile only)

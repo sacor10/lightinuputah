@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import './ContactForm.css';
 import { API_ENDPOINTS } from '../constants';
+import { validateEmail, validateField, validateForm } from '../utils/validation';
 
 interface ContactFormData {
   name: string;
@@ -28,46 +29,7 @@ const ContactForm: React.FC = () => {
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
 
-  const validateField = (name: keyof ContactFormData, value: string): string | undefined => {
-    switch (name) {
-      case 'name':
-        if (!value.trim()) {
-          return 'Name is required';
-        }
-        if (value.trim().length < 5) {
-          return 'Name must be at least 5 characters';
-        }
-        if (value.trim().length > 50) {
-          return 'Name must be no more than 50 characters';
-        }
-        break;
-      case 'email':
-        if (!value.trim()) {
-          return 'Email is required';
-        }
-        if (!validateEmail(value)) {
-          return 'Please enter a valid email address';
-        }
-        break;
-      case 'message':
-        if (!value.trim()) {
-          return 'Message is required';
-        }
-        if (value.trim().length < 10) {
-          return 'Message must be at least 10 characters';
-        }
-        if (value.trim().length > 1000) {
-          return 'Message must be no more than 1000 characters';
-        }
-        break;
-    }
-    return undefined;
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -98,36 +60,18 @@ const ContactForm: React.FC = () => {
     setRecaptchaToken(token);
   };
 
-  const validateForm = (): boolean => {
-    const errors: ValidationErrors = {};
-    
-    errors.name = validateField('name', formData.name);
-    errors.email = validateField('email', formData.email);
-    errors.message = validateField('message', formData.message);
-    
-    if (!recaptchaToken) {
-      setErrorMessage('Please complete the reCAPTCHA verification');
-      return false;
-    }
-    
-    setValidationErrors(errors);
-    
-    // Check if there are any validation errors
-    const hasErrors = Object.values(errors).some(error => error !== undefined);
-    
-    if (hasErrors) {
-      setErrorMessage('Please fix the validation errors above');
-      return false;
-    }
-    
-    return true;
+  const validateFormData = (): boolean => {
+    const validation = validateForm(formData, recaptchaToken);
+    setValidationErrors(validation.errors);
+    setErrorMessage(validation.errorMessage);
+    return validation.isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     
-    if (!validateForm()) {
+    if (!validateFormData()) {
       return;
     }
 

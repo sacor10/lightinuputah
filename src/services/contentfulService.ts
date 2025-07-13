@@ -1,4 +1,5 @@
 import { createClient } from 'contentful';
+import { logger } from '../utils/logger';
 
 const SPACE_ID = process.env.REACT_APP_CONTENTFUL_SPACE_ID;
 const ACCESS_TOKEN = process.env.REACT_APP_CONTENTFUL_ACCESS_TOKEN;
@@ -77,9 +78,7 @@ class ContentfulService {
   }
 
   private async fetchItems(): Promise<ProcessedItem[]> {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('ContentfulService: Fetching items from Contentful...');
-    }
+    logger.log('ContentfulService: Fetching items from Contentful...');
 
     try {
       const response = await this.client.getEntries({
@@ -100,9 +99,7 @@ class ContentfulService {
       // Sort items alphabetically by title
       items.sort((a, b) => a.title.localeCompare(b.title));
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('ContentfulService: Successfully fetched', items.length, 'items');
-      }
+      logger.log('ContentfulService: Successfully fetched', items.length, 'items');
 
       return items;
     } catch (error) {

@@ -7,13 +7,8 @@ export interface GalleryItem {
   description?: string;
 }
 
-export interface SlideshowItem {
-  id: string;
-  title: string;
-  imageUrl: string;
-  category: string;
-  description?: string;
-}
+// Alias for backward compatibility
+export type SlideshowItem = GalleryItem;
 
 // Form types
 export interface ContactFormData {

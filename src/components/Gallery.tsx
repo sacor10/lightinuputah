@@ -3,11 +3,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useContentfulData } from '../hooks/useContentfulData';
 import ContentfulService from '../services/contentfulService';
 import { convertToGalleryItems, GalleryItem } from '../utils/galleryUtils';
+import { logger } from '../utils/logger';
+import { GALLERY_CONFIG, BREAKPOINTS, TOUCH_CONFIG } from '../constants';
 import './Gallery.css';
 
 
 
 
+
+import { useIsMobile } from '../hooks/useIsMobile';
 
 // Spinner component for loading states
 const Spinner: React.FC = () => (
@@ -15,23 +19,6 @@ const Spinner: React.FC = () => (
     <div className="spinner-inner"></div>
   </div>
 );
-
-// Hook to detect mobile devices (copied from Slideshow.tsx)
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
-
-  return isMobile;
-};
 
 const Gallery: React.FC = () => {
   const { items: allItems, categories, loading } = useContentfulData();
@@ -56,10 +43,10 @@ const Gallery: React.FC = () => {
   // Helper to determine number of columns based on screen size
   const getNumColumns = React.useCallback(() => {
     if (typeof window !== 'undefined') {
-      if (window.innerWidth <= 768) {
-        return Math.floor((window.innerWidth - 32) / 250) || 1; // min 1 col
+      if (window.innerWidth <= BREAKPOINTS.MOBILE) {
+        return Math.floor((window.innerWidth - GALLERY_CONFIG.MOBILE_PADDING) / GALLERY_CONFIG.MIN_COLUMN_WIDTH) || 1; // min 1 col
       } else {
-        return Math.floor((window.innerWidth - 64) / 300) || 1; // min 1 col
+        return Math.floor((window.innerWidth - GALLERY_CONFIG.DESKTOP_PADDING) / GALLERY_CONFIG.DESKTOP_COLUMN_WIDTH) || 1; // min 1 col
       }
     }
     return isMobile ? 1 : 2;
@@ -84,21 +71,17 @@ const Gallery: React.FC = () => {
       
       setFiltered(galleryItems);
       // Set initial number of items based on device
-      const initialCount = isMobile ? 3 : 6;
+      const initialCount = isMobile ? GALLERY_CONFIG.INITIAL_ITEMS_MOBILE : GALLERY_CONFIG.INITIAL_ITEMS_DESKTOP;
       setDisplayedItems(galleryItems.slice(0, initialCount));
       setItemsToShow(initialCount);
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Gallery component: Gallery loaded successfully with round-robin ordering');
-      }
+      logger.log('Gallery component: Gallery loaded successfully with round-robin ordering');
     }
   }, [allItems, isMobile]);
 
   // Add a debug log for activeCategory only in development
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Active category:', activeCategory);
-    }
+    logger.log('Active category:', activeCategory);
   }, [activeCategory]);
 
   // Handle mobile back gesture to close fullscreen image
@@ -131,7 +114,7 @@ const Gallery: React.FC = () => {
       const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
       
       // Check if it's a right-to-left swipe (back gesture) - more sensitive threshold
-      const isBackGesture = deltaX > 30 && isHorizontalSwipe && Math.abs(deltaX) > 20;
+      const isBackGesture = deltaX > TOUCH_CONFIG.BACK_GESTURE_THRESHOLD && isHorizontalSwipe && Math.abs(deltaX) > TOUCH_CONFIG.MIN_SWIPE_DISTANCE;
       
       if (isBackGesture) {
         touchEvent.preventDefault();
@@ -168,7 +151,7 @@ const Gallery: React.FC = () => {
   }, [fullscreenImage, isMobile]);
 
   const handleFilter = (category: string) => {
-    const initialCount = isMobile ? 3 : 6;
+    const initialCount = isMobile ? GALLERY_CONFIG.INITIAL_ITEMS_MOBILE : GALLERY_CONFIG.INITIAL_ITEMS_DESKTOP;
     // If clicking the same category that's already active, toggle to 'All'
     if (activeCategory === category) {
       setActiveCategory('All');
@@ -202,10 +185,9 @@ const Gallery: React.FC = () => {
     // Simulate a small delay to show the loading state and make the transition smoother
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    const increment = 6;
-    const nextItems = filtered.slice(0, itemsToShow + increment);
+    const nextItems = filtered.slice(0, itemsToShow + GALLERY_CONFIG.LOAD_MORE_INCREMENT);
     setDisplayedItems(nextItems);
-    setItemsToShow(itemsToShow + increment);
+    setItemsToShow(itemsToShow + GALLERY_CONFIG.LOAD_MORE_INCREMENT);
     setLoadingMore(false);
   };
 

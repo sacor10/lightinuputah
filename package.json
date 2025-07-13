@@ -55,7 +55,7 @@
     "test:netlify": "node test-netlify-function.js",
     "test:contact": "node test-contact-function.js",
     "type-check": "tsc --noEmit",
-    "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "analyze": "npm run build && node analyze-bundle.js",
     "size": "npm run build && npx size-limit"
   },
   "eslintConfig": {
