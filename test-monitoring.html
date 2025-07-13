@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Test - Lightin Up Utah</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚨 Heroku Performance Monitoring Test</h1>
+    <p>This page helps test the performance monitoring and alerting system for Lightin Up Utah.</p>
+    
+    <div class="test-section">
+        <h3>📊 Performance Monitoring Tests</h3>
+        <p>These tests will trigger the monitoring system to log performance metrics.</p>
+        
+        <button class="test-button" onclick="testWebVitals()">Test Web Vitals Logging</button>
+        <button class="test-button" onclick="testMemoryUsage()">Test Memory Monitoring</button>
+        <button class="test-button" onclick="testResourceLoading()">Test Resource Loading</button>
+        <button class="test-button" onclick="testUserInteraction()">Test User Interaction</button>
+        
+        <div id="performance-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>⚠️ Error Testing</h3>
+        <p>These tests will trigger error monitoring alerts.</p>
+        
+        <button class="test-button danger" onclick="testJavaScriptError()">Trigger JavaScript Error</button>
+        <button class="test-button danger" onclick="testUnhandledRejection()">Trigger Unhandled Rejection</button>
+        
+        <div id="error-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>📈 Performance Simulation</h3>
+        <p>These tests simulate poor performance scenarios.</p>
+        
+        <button class="test-button" onclick="simulateSlowLoading()">Simulate Slow Loading</button>
+        <button class="test-button" onclick="simulateHighMemory()">Simulate High Memory Usage</button>
+        
+        <div id="simulation-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔍 Monitoring Status</h3>
+        <div id="monitoring-status">
+            <p>Checking monitoring system...</p>
+        </div>
+    </div>
+
+    <script>
+        // Test Web Vitals logging
+        function testWebVitals() {
+            const status = document.getElementById('performance-status');
+            status.innerHTML = '<div class="status info">Testing Web Vitals logging...</div>';
+            
+            // Simulate a web vital metric
+            if (window.reportWebVitals) {
+                const testMetric = {
+                    name: 'TEST_LCP',
+                    value: 2500,
+                    unit: 'ms',
+                    status: 'good'
+                };
+                
+                // This should trigger the monitoring
+                console.log('[TEST] Web Vitals metric logged:', testMetric);
+                status.innerHTML = '<div class="status success">✅ Web Vitals test completed. Check browser console and Heroku logs.</div>';
+            } else {
+                status.innerHTML = '<div class="status error">❌ Web Vitals monitoring not available</div>';
+            }
+        }
+        
+        // Test memory monitoring
+        function testMemoryUsage() {
+            const status = document.getElementById('performance-status');
+            status.innerHTML = '<div class="status info">Testing memory monitoring...</div>';
+            
+            if (performance.memory) {
+                const memory = performance.memory;
+                const memoryInfo = {
+                    usedJSHeapSize: Math.round(memory.usedJSHeapSize / 1024 / 1024),
+                    totalJSHeapSize: Math.round(memory.totalJSHeapSize / 1024 / 1024),
+                    jsHeapSizeLimit: Math.round(memory.jsHeapSizeLimit / 1024 / 1024)
+                };
+                
+                console.log('[TEST] Memory usage:', memoryInfo);
+                status.innerHTML = `<div class="status success">✅ Memory monitoring test completed. Used: ${memoryInfo.usedJSHeapSize}MB / ${memoryInfo.jsHeapSizeLimit}MB</div>`;
+            } else {
+                status.innerHTML = '<div class="status error">❌ Memory monitoring not available</div>';
+            }
+        }
+        
+        // Test resource loading
+        function testResourceLoading() {
+            const status = document.getElementById('performance-status');
+            status.innerHTML = '<div class="status info">Testing resource loading monitoring...</div>';
+            
+            // Create a slow-loading resource
+            const img = new Image();
+            const startTime = performance.now();
+            
+            img.onload = function() {
+                const loadTime = performance.now() - startTime;
+                console.log('[TEST] Resource load time:', loadTime + 'ms');
+                status.innerHTML = `<div class="status success">✅ Resource loading test completed. Load time: ${loadTime.toFixed(2)}ms</div>`;
+            };
+            
+            img.onerror = function() {
+                console.log('[TEST] Resource load failed');
+                status.innerHTML = '<div class="status error">❌ Resource loading test failed</div>';
+            };
+            
+            // Load a small image with cache-busting
+            img.src = `https://via.placeholder.com/100x100?text=Test&t=${Date.now()}`;
+        }
+        
+        // Test user interaction
+        function testUserInteraction() {
+            const status = document.getElementById('performance-status');
+            status.innerHTML = '<div class="status info">Testing user interaction monitoring...</div>';
+            
+            // Simulate user interaction
+            const event = new MouseEvent('click', {
+                view: window,
+                bubbles: true,
+                cancelable: true
+            });
+            
+            document.dispatchEvent(event);
+            console.log('[TEST] User interaction logged');
+            status.innerHTML = '<div class="status success">✅ User interaction test completed</div>';
+        }
+        
+        // Test JavaScript error
+        function testJavaScriptError() {
+            const status = document.getElementById('error-status');
+            status.innerHTML = '<div class="status info">Triggering JavaScript error...</div>';
+            
+            try {
+                // Intentionally cause an error
+                const undefinedVar = undefined;
+                undefinedVar.nonExistentMethod();
+            } catch (error) {
+                console.error('[TEST] JavaScript error triggered:', error);
+                status.innerHTML = '<div class="status success">✅ JavaScript error test completed. Check browser console.</div>';
+            }
+        }
+        
+        // Test unhandled rejection
+        function testUnhandledRejection() {
+            const status = document.getElementById('error-status');
+            status.innerHTML = '<div class="status info">Triggering unhandled rejection...</div>';
+            
+            // Create an unhandled promise rejection
+            Promise.reject(new Error('Test unhandled rejection'));
+            
+            setTimeout(() => {
+                status.innerHTML = '<div class="status success">✅ Unhandled rejection test completed. Check browser console.</div>';
+            }, 1000);
+        }
+        
+        // Simulate slow loading
+        function simulateSlowLoading() {
+            const status = document.getElementById('simulation-status');
+            status.innerHTML = '<div class="status info">Simulating slow loading...</div>';
+            
+            // Simulate a slow operation
+            setTimeout(() => {
+                console.log('[TEST] Slow loading simulation completed');
+                status.innerHTML = '<div class="status success">✅ Slow loading simulation completed</div>';
+            }, 3000);
+        }
+        
+        // Simulate high memory usage
+        function simulateHighMemory() {
+            const status = document.getElementById('simulation-status');
+            status.innerHTML = '<div class="status info">Simulating high memory usage...</div>';
+            
+            // Create some memory pressure
+            const largeArray = [];
+            for (let i = 0; i < 1000000; i++) {
+                largeArray.push('test data ' + i);
+            }
+            
+            console.log('[TEST] High memory usage simulation completed');
+            status.innerHTML = '<div class="status success">✅ High memory usage simulation completed</div>';
+            
+            // Clean up
+            setTimeout(() => {
+                largeArray.length = 0;
+            }, 1000);
+        }
+        
+        // Check monitoring status
+        function checkMonitoringStatus() {
+            const status = document.getElementById('monitoring-status');
+            
+            const checks = {
+                'Performance API': typeof performance !== 'undefined',
+                'Memory API': typeof performance.memory !== 'undefined',
+                'Console Logging': typeof console !== 'undefined',
+                'Error Handling': typeof window.onerror !== 'undefined'
+            };
+            
+            let statusHTML = '<h4>Monitoring System Status:</h4>';
+            let allGood = true;
+            
+            for (const [check, available] of Object.entries(checks)) {
+                const icon = available ? '✅' : '❌';
+                const color = available ? 'success' : 'error';
+                statusHTML += `<div class="status ${color}">${icon} ${check}: ${available ? 'Available' : 'Not Available'}</div>`;
+                if (!available) allGood = false;
+            }
+            
+            if (allGood) {
+                statusHTML += '<div class="status success">🎉 All monitoring systems are available!</div>';
+            } else {
+                statusHTML += '<div class="status error">⚠️ Some monitoring systems are not available</div>';
+            }
+            
+            status.innerHTML = statusHTML;
+        }
+        
+        // Initialize
+        window.addEventListener('load', function() {
+            checkMonitoringStatus();
+            
+            // Log that the test page loaded
+            console.log('[TEST] Monitoring test page loaded at:', new Date().toISOString());
+            console.log('[TEST] User Agent:', navigator.userAgent);
+            console.log('[TEST] URL:', window.location.href);
+        });
+    </script>
+</body>
+</html> 
