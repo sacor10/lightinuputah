@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import './ContactForm.css';
+import { API_ENDPOINTS } from '../constants';
 
 interface ContactFormData {
   name: string;
@@ -134,8 +135,8 @@ const ContactForm: React.FC = () => {
     setSubmitStatus('idle');
 
     try {
-      // Use Netlify Function endpoint
-      const response = await fetch('/.netlify/functions/contact', {
+      // Use Netlify Function endpoint from constants
+      const response = await fetch(API_ENDPOINTS.CONTACT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

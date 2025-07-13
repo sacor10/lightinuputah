@@ -12,6 +12,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "contentful": "^11.7.6",
+    "helmet": "^8.1.0",
     "node-fetch": "^2.7.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -63,7 +64,12 @@
       "react-app/jest"
     ],
     "rules": {
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ],
       "@typescript-eslint/no-inferrable-types": "error"
     }
   },
