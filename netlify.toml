@@ -1,6 +1,6 @@
 [build]
-  # Build command for React app
-  command = "npm run build"
+  # Install function dependencies and build React app
+  command = "cd netlify/functions && npm install && cd ../.. && npm run build"
   # Publish directory (where the built files are)
   publish = "build"
   # Functions directory
