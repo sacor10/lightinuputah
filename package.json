@@ -92,7 +92,10 @@
     "bundle:size": "npm run build && npx size-limit --why",
     "cache:clear": "rm -rf build && rm -rf node_modules/.cache",
     "optimize:images": "npm run build && npx imagemin public/images/* --out-dir=build/static/images",
-    "lighthouse:ci": "npm run build && npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-ci.json --chrome-flags='--headless --no-sandbox'"
+    "lighthouse:ci": "npm run build && npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-ci.json --chrome-flags='--headless --no-sandbox'",
+    "heroku:setup-alerts": "node setup-heroku-alerts.js",
+    "heroku:test-alerts": "heroku logs --tail --app lightinuputah | grep 'PERFORMANCE-ALERT\\|JavaScript_Error'",
+    "heroku:view-alerts": "heroku addons:open papertrail --app lightinuputah"
   },
   "eslintConfig": {
     "extends": [
