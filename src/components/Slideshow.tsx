@@ -230,28 +230,49 @@ const Slideshow: React.FC = () => {
                 transform: `translateX(calc(-${currentIndex * 100}% - ${swipeOffset}px))`
               }}
             >
-              {filteredItems.map((item, _index) => (
-                <div key={item.id} className="slideshow-slide">
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.title}
-                    className="slideshow-image"
-                  />
-                  <div className="slideshow-overlay">
-                    {item.category && (
-                      <button 
-                        className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
-                        onClick={() => handleCategoryClick(item.category)}
+              {filteredItems.map((item, index) => {
+                // Only render images that are currently visible or adjacent (for smooth transitions)
+                const isVisible = Math.abs(index - currentIndex) <= 1;
+                
+                return (
+                  <div key={item.id} className="slideshow-slide">
+                    {isVisible ? (
+                      <img 
+                        src={item.imageUrl} 
+                        alt={item.title}
+                        className="slideshow-image"
+                      />
+                    ) : (
+                      <div 
+                        className="slideshow-image-placeholder"
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          backgroundColor: '#f0f0f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
                       >
-                        {item.category}
-                      </button>
+                        <span style={{ color: '#999', fontSize: '14px' }}>Loading...</span>
+                      </div>
                     )}
-                    {item.description && (
-                      <p className="slideshow-description">{item.description}</p>
-                    )}
+                    <div className="slideshow-overlay">
+                      {item.category && (
+                        <button 
+                          className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
+                          onClick={() => handleCategoryClick(item.category)}
+                        >
+                          {item.category}
+                        </button>
+                      )}
+                      {item.description && (
+                        <p className="slideshow-description">{item.description}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : (

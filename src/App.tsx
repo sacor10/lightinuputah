@@ -4,6 +4,7 @@ import './App.css';
 import ContactForm from './components/ContactForm';
 import ErrorBoundary from './components/ErrorBoundary';
 import headerImage from './images/logo.png';
+import { useIsMobile } from './hooks/useIsMobile';
 
 // Lazy load heavy components
 const Gallery = React.lazy(() => import('./components/Gallery'));
@@ -28,6 +29,7 @@ const GallerySkeleton: React.FC = () => (
 );
 
 const App: React.FC = () => {
+  const isMobile = useIsMobile();
   return (
     <div className="App">
       <header className="header">
@@ -117,7 +119,11 @@ const App: React.FC = () => {
               <p><strong>Location:</strong> Salt Lake City, Utah</p>
               <p><strong>Email:</strong> info@lightinuputah.com</p>
               <p><strong>Instagram:</strong> <a href="https://www.instagram.com/lightinuputah/" target="_blank" rel="noopener noreferrer">@lightinuputah</a></p>
-              <p><a href="https://www.instagram.com/direct/t/104833807708713/" target="_blank" rel="noopener noreferrer">Hit me up on Instagram! →</a></p>
+              {isMobile ? (
+                <p><a href="https://www.instagram.com/lightinuputah/" target="_blank" rel="noopener noreferrer">Hit me up on Instagram! →</a></p>
+              ) : (
+                <p><a href="https://www.instagram.com/direct/t/104833807708713/" target="_blank" rel="noopener noreferrer">Hit me up on Instagram! →</a></p>
+              )}
             </div>
           </div>
         </div>
