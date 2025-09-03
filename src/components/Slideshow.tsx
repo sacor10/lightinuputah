@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useContentfulData } from '../hooks/useContentfulData';
 import ContentfulService from '../services/contentfulService';
 import { logger } from '../utils/logger';
-import { SLIDESHOW_CONFIG } from '../constants';
+import { SLIDESHOW_CONFIG, TOUCH_CONFIG } from '../constants';
 import { SlideshowItem } from '../types';
 import './Slideshow.css';
 
@@ -16,12 +17,25 @@ const Slideshow: React.FC = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<string | null>(null);
   
+  // Fullscreen state
+  const [fullscreenImage, setFullscreenImage] = useState<null | {
+    url: string;
+    title: string;
+  }>(null);
+  
   // Touch/swipe state for carousel (mobile only)
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isSwiping, setIsSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const slideshowRef = useRef<HTMLDivElement>(null);
+  
+  // Refs for fullscreen touch gesture detection
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   
   // Timer ref for auto-advance functionality
   const autoAdvanceIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,9 +52,13 @@ const Slideshow: React.FC = () => {
       clearInterval(autoAdvanceIntervalRef.current);
     }
 
-    if (filteredItems.length <= 1) return;
+    // Don't start timer if in fullscreen mode
+    if (filteredItems.length <= 1 || fullscreenImage) return;
 
     autoAdvanceIntervalRef.current = setInterval(() => {
+      // Don't advance if in fullscreen mode
+      if (fullscreenImage) return;
+      
       if (isMobile) {
         // For mobile, directly update the index without calling goToNext to avoid infinite loop
         setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredItems.length);
@@ -53,7 +71,7 @@ const Slideshow: React.FC = () => {
         }, 300);
       }
     }, SLIDESHOW_CONFIG.AUTO_ADVANCE_INTERVAL);
-  }, [filteredItems.length, isMobile]);
+  }, [filteredItems.length, isMobile, fullscreenImage]);
 
   // Function to reset the auto-advance timer
   const resetAutoAdvanceTimer = useCallback(() => {
@@ -83,6 +101,72 @@ const Slideshow: React.FC = () => {
       }
     };
   }, [filteredItems.length, isMobile, startAutoAdvanceTimer]);
+
+  // Handle mobile back gesture to close fullscreen image
+  useEffect(() => {
+    if (!fullscreenImage || !isMobile) return;
+
+    const handleTouchStart = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      touchStartX.current = touchEvent.touches[0].clientX;
+      touchStartY.current = touchEvent.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: Event) => {
+      if (touchStartX.current === null || touchStartY.current === null) return;
+      
+      const touchEvent = e as TouchEvent;
+      touchEndX.current = touchEvent.touches[0].clientX;
+      touchEndY.current = touchEvent.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: Event) => {
+      if (touchStartX.current === null || touchStartY.current === null || 
+          touchEndX.current === null || touchEndY.current === null) return;
+
+      const touchEvent = e as TouchEvent;
+      const deltaX = touchEndX.current - touchStartX.current;
+      const deltaY = touchEndY.current - touchStartY.current;
+      
+      // Check if it's a horizontal swipe (more horizontal than vertical)
+      const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+      
+      // Check if it's a right-to-left swipe (back gesture) - more sensitive threshold
+      const isBackGesture = deltaX > TOUCH_CONFIG.BACK_GESTURE_THRESHOLD && isHorizontalSwipe && Math.abs(deltaX) > TOUCH_CONFIG.MIN_SWIPE_DISTANCE;
+      
+      if (isBackGesture) {
+        touchEvent.preventDefault();
+        setFullscreenImage(null);
+      }
+      
+      // Reset touch coordinates
+      touchStartX.current = null;
+      touchStartY.current = null;
+      touchEndX.current = null;
+      touchEndY.current = null;
+    };
+
+    // Add event listeners to the fullscreen overlay with a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      const overlay = overlayRef.current;
+      if (overlay) {
+        overlay.addEventListener('touchstart', handleTouchStart, { passive: false });
+        overlay.addEventListener('touchmove', handleTouchMove, { passive: false });
+        overlay.addEventListener('touchend', handleTouchEnd, { passive: false });
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const overlay = overlayRef.current;
+      if (overlay) {
+        overlay.removeEventListener('touchstart', handleTouchStart);
+        overlay.removeEventListener('touchmove', handleTouchMove);
+        overlay.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [fullscreenImage, isMobile]);
 
   const handleCategoryClick = (category: string) => {
     if (currentFilter === category) {
@@ -209,112 +293,182 @@ const Slideshow: React.FC = () => {
   }
 
   return (
-    <div 
-      className="slideshow-container"
-      ref={slideshowRef}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      <div className="slideshow-wrapper">
-        <button className="slideshow-button slideshow-prev" onClick={goToPrevious}>
-          &#8249;
-        </button>
-        
-        {isMobile ? (
-          // Mobile: Horizontal carousel
-          <div className="slideshow-carousel">
-            <div 
-              className={`slideshow-track ${isSwiping ? 'swiping' : ''} ${isTransitioning ? 'transitioning' : ''}`}
-              style={{
-                transform: `translateX(calc(-${currentIndex * 100}% - ${swipeOffset}px))`
-              }}
-            >
-              {filteredItems.map((item, index) => {
-                // Only render images that are currently visible or adjacent (for smooth transitions)
-                const isVisible = Math.abs(index - currentIndex) <= 1;
-                
-                return (
-                  <div key={item.id} className="slideshow-slide">
-                    {isVisible ? (
-                      <img 
-                        src={item.imageUrl} 
-                        alt={item.title}
-                        className="slideshow-image"
-                      />
-                    ) : (
-                      <div 
-                        className="slideshow-image-placeholder"
-                        style={{ 
-                          width: '100%', 
-                          height: '100%', 
-                          backgroundColor: '#f0f0f0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <span style={{ color: '#999', fontSize: '14px' }}>Loading...</span>
-                      </div>
-                    )}
-                    <div className="slideshow-overlay">
-                      {item.category && (
-                        <button 
-                          className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
-                          onClick={() => handleCategoryClick(item.category)}
+    <>
+      <div 
+        className="slideshow-container"
+        ref={slideshowRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <div className="slideshow-wrapper">
+          <button className="slideshow-button slideshow-prev" onClick={goToPrevious}>
+            &#8249;
+          </button>
+          
+          {isMobile ? (
+            // Mobile: Horizontal carousel
+            <div className="slideshow-carousel">
+              <div 
+                className={`slideshow-track ${isSwiping ? 'swiping' : ''} ${isTransitioning ? 'transitioning' : ''}`}
+                style={{
+                  transform: `translateX(calc(-${currentIndex * 100}% - ${swipeOffset}px))`
+                }}
+              >
+                {filteredItems.map((item, index) => {
+                  // Only render images that are currently visible or adjacent (for smooth transitions)
+                  const isVisible = Math.abs(index - currentIndex) <= 1;
+                  
+                  return (
+                    <div key={item.id} className="slideshow-slide">
+                      {isVisible ? (
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.title}
+                          className="slideshow-image"
+                          onClick={() => setFullscreenImage({
+                            url: item.imageUrl,
+                            title: item.title
+                          })}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      ) : (
+                        <div 
+                          className="slideshow-image-placeholder"
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            backgroundColor: '#f0f0f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
                         >
-                          {item.category}
-                        </button>
+                          <span style={{ color: '#999', fontSize: '14px' }}>Loading...</span>
+                        </div>
                       )}
-                      {item.description && (
-                        <p className="slideshow-description">{item.description}</p>
-                      )}
+                      <div className="slideshow-overlay">
+                        {item.category && (
+                          <button 
+                            className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
+                            onClick={() => handleCategoryClick(item.category)}
+                          >
+                            {item.category}
+                          </button>
+                        )}
+                        {item.description && (
+                          <p className="slideshow-description">{item.description}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ) : (
-          // Desktop: Fade transition
-          <div className={`slideshow-slide ${isSwiping ? 'swiping' : ''}`}>
-            <img 
-              src={filteredItems[currentIndex]?.imageUrl} 
-              alt={filteredItems[currentIndex]?.title}
-              className={`slideshow-image ${isTransitioning ? 'fade-out' : 'fade-in'}`}
+          ) : (
+            // Desktop: Fade transition
+            <div className={`slideshow-slide ${isSwiping ? 'swiping' : ''}`}>
+              <img 
+                src={filteredItems[currentIndex]?.imageUrl} 
+                alt={filteredItems[currentIndex]?.title}
+                className={`slideshow-image ${isTransitioning ? 'fade-out' : 'fade-in'}`}
+                onClick={() => setFullscreenImage({
+                  url: filteredItems[currentIndex]?.imageUrl || '',
+                  title: filteredItems[currentIndex]?.title || ''
+                })}
+                style={{ cursor: 'pointer' }}
+              />
+              <div className="slideshow-overlay">
+                {filteredItems[currentIndex]?.category && (
+                  <button 
+                    className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
+                    onClick={() => handleCategoryClick(filteredItems[currentIndex]?.category)}
+                  >
+                    {filteredItems[currentIndex]?.category}
+                  </button>
+                )}
+                {filteredItems[currentIndex]?.description && (
+                  <p className="slideshow-description">{filteredItems[currentIndex]?.description}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <button className="slideshow-button slideshow-next" onClick={goToNext}>
+            &#8250;
+          </button>
+        </div>
+
+        <div className="slideshow-indicators">
+          {filteredItems.map((_, index) => (
+            <button
+              key={index}
+              className={`slideshow-indicator ${index === currentIndex ? 'active' : ''}`}
+              onClick={() => goToSlide(index)}
+              aria-label={`Go to slide ${index + 1}`}
             />
-            <div className="slideshow-overlay">
-              {filteredItems[currentIndex]?.category && (
-                <button 
-                  className={`slideshow-category ${currentFilter ? 'active-filter' : ''}`}
-                  onClick={() => handleCategoryClick(filteredItems[currentIndex]?.category)}
-                >
-                  {filteredItems[currentIndex]?.category}
-                </button>
-              )}
-              {filteredItems[currentIndex]?.description && (
-                <p className="slideshow-description">{filteredItems[currentIndex]?.description}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        <button className="slideshow-button slideshow-next" onClick={goToNext}>
-          &#8250;
-        </button>
+          ))}
+        </div>
       </div>
 
-      <div className="slideshow-indicators">
-        {filteredItems.map((_, index) => (
+      {/* Fullscreen overlay rendered as portal */}
+      {fullscreenImage && createPortal(
+        <div
+          ref={overlayRef}
+          className="slideshow-fullscreen-overlay"
+          onClick={() => setFullscreenImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
           <button
-            key={index}
-            className={`slideshow-indicator ${index === currentIndex ? 'active' : ''}`}
-            onClick={() => goToSlide(index)}
-            aria-label={`Go to slide ${index + 1}`}
+            className="slideshow-fullscreen-close"
+            onClick={e => {
+              e.stopPropagation();
+              setFullscreenImage(null);
+            }}
+            style={{
+              position: 'absolute',
+              top: 24,
+              left: 24,
+              background: 'rgba(0,0,0,0.7)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              fontSize: 24,
+              cursor: 'pointer',
+              zIndex: 1001,
+            }}
+            aria-label="Close fullscreen image"
+          >
+            ×
+          </button>
+          <img
+            src={fullscreenImage.url}
+            alt={fullscreenImage.title}
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              boxShadow: '0 0 32px 8px rgba(0,0,0,0.7)',
+              borderRadius: 8,
+            }}
+            onClick={e => e.stopPropagation()}
           />
-        ))}
-      </div>
-    </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 };
 
