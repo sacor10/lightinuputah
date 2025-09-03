@@ -68,8 +68,8 @@ const App: React.FC = () => {
           <h2 className="hero-title">Professional LED Car Lighting Installation</h2>
           <p className="hero-subtitle">Transform your vehicle with custom LED lighting solutions in Salt Lake City, Utah</p>
           <div className="hero-info">
-            <h3>Hi, I'm Braden!</h3>
-            <p>Professional lighting installer specializing in full LED systems, headlights, interior lighting, underglow, and everything in between.</p>
+            <h3>We are Lightin' Up Utah!</h3>
+            <p>Vehicle lighting installers specializing in full LED systems, headlights, interior lighting, underglow, and everything in between.</p>
             <a href="#contact" className="cta-button">Get a Quote</a>
           </div>
         </div>
