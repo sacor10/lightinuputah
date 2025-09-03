@@ -112,7 +112,7 @@ class ContentfulService {
     return Array.from(new Set(items.map(item => item.category))).sort();
   }
 
-  public createRoundRobinOrder(items: ProcessedItem[], maxItems = Infinity): ProcessedItem[] {
+  public createRoundRobinOrder(items: ProcessedItem[], maxItems = Infinity, reverseOrder = false): ProcessedItem[] {
     const categories = this.getCategories(items);
     
     // Group items by category
@@ -123,6 +123,13 @@ class ContentfulService {
       }
       itemsByCategory.get(item.category)!.push(item);
     });
+
+    // If reverse order is requested, reverse the items within each category
+    if (reverseOrder) {
+      itemsByCategory.forEach((categoryItems) => {
+        categoryItems.reverse();
+      });
+    }
 
     // Find the maximum number of items in any category
     let maxItemsPerCategory = 0;

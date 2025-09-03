@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useRef } from 'react';
 
 import './App.css';
 import ContactForm from './components/ContactForm';
@@ -30,9 +30,56 @@ const GallerySkeleton: React.FC = () => (
 
 const App: React.FC = () => {
   const isMobile = useIsMobile();
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    let ticking = false;
+    let isShrunk = false;
+    let lastScrollY = 0;
+    let scrollDirection = 'down';
+
+    const updateHeader = () => {
+      const scrollY = window.scrollY;
+      
+      // Determine scroll direction
+      if (scrollY > lastScrollY) {
+        scrollDirection = 'down';
+      } else if (scrollY < lastScrollY) {
+        scrollDirection = 'up';
+      }
+      
+      // Use more robust hysteresis with direction awareness
+      if (!isShrunk && scrollY > 120 && scrollDirection === 'down') {
+        // Shrink when scrolling down past 120px
+        header.classList.add('shrunk');
+        isShrunk = true;
+      } else if (isShrunk && scrollY < 80 && scrollDirection === 'up') {
+        // Expand when scrolling back up past 80px
+        header.classList.remove('shrunk');
+        isShrunk = false;
+      }
+      
+      lastScrollY = scrollY;
+      ticking = false;
+    };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateHeader);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="App">
-      <header className="header">
+      <header ref={headerRef} className="header">
         <div className="header-flex">
           <div className="header-image-container">
             <img 
@@ -53,6 +100,13 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      <section className="hero">
+        <div className="container">
+          <h2 className="hero-title">Professional LED Car Lighting Installation</h2>
+          <p className="hero-subtitle">Transform your vehicle with custom LED lighting solutions in Salt Lake City, Utah</p>
+        </div>
+      </section>
+
       <section className="slideshow-section">
         <div className="container">
           <ErrorBoundary>
@@ -63,15 +117,11 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section className="hero">
+      <section className="about">
         <div className="container">
-          <h2 className="hero-title">Professional LED Car Lighting Installation</h2>
-          <p className="hero-subtitle">Transform your vehicle with custom LED lighting solutions in Salt Lake City, Utah</p>
-          <div className="hero-info">
-            <h3>We are Lightin' Up Utah!</h3>
-            <p>Vehicle lighting installers specializing in full LED systems, headlights, interior lighting, underglow, and everything in between.</p>
-            <a href="#contact" className="cta-button">Get a Quote</a>
-          </div>
+          <h3>We are Lightin' Up Utah!</h3>
+          <p>Vehicle lighting installers specializing in full LED systems, headlights, interior lighting, underglow, and everything in between.</p>
+          <a href="#contact" className="cta-button">Get a Quote</a>
         </div>
       </section>
 

@@ -63,7 +63,7 @@ const Slideshow: React.FC = () => {
   useEffect(() => {
     if (allItems.length > 0) {
       const service = ContentfulService.getInstance();
-      const slideshowItems = service.createRoundRobinOrder(allItems, SLIDESHOW_CONFIG.MAX_ITEMS);
+      const slideshowItems = service.createRoundRobinOrder(allItems, SLIDESHOW_CONFIG.MAX_ITEMS, true);
       setFilteredItems(slideshowItems);
       
       logger.log('Slideshow component: Slideshow loaded successfully with', slideshowItems.length, 'items');
@@ -90,7 +90,7 @@ const Slideshow: React.FC = () => {
       setIsTransitioning(true);
       setTimeout(() => {
         const service = ContentfulService.getInstance();
-        const slideshowItems = service.createRoundRobinOrder(allItems, SLIDESHOW_CONFIG.MAX_ITEMS);
+        const slideshowItems = service.createRoundRobinOrder(allItems, SLIDESHOW_CONFIG.MAX_ITEMS, true);
         setFilteredItems(slideshowItems);
         setCurrentFilter(null);
         setCurrentIndex(0);
