@@ -8,9 +8,9 @@ You need to set the following environment variables in your Netlify dashboard:
 
 ### Required Variables
 
-1. **SENDGRID_API_KEY**
-   - Your SendGrid API key for sending emails
-   - Get this from your SendGrid dashboard
+1. **BREVO_API_KEY**
+   - Your Brevo API key for sending emails
+   - Get this from your Brevo dashboard at https://www.brevo.com
 
 2. **RECAPTCHA_SECRET_KEY**
    - Your reCAPTCHA secret key for server-side verification
@@ -31,7 +31,7 @@ You need to set the following environment variables in your Netlify dashboard:
 
 ## Function Dependencies
 
-The Netlify Function requires the `@sendgrid/mail` package. This is managed in `netlify/functions/package.json`.
+The Netlify Function requires the `@getbrevo/brevo` package. This is managed in `netlify/functions/package.json`.
 
 ## Testing the Function
 
@@ -59,7 +59,7 @@ The function includes comprehensive error handling for:
 - Missing required fields
 - Invalid email format
 - reCAPTCHA verification failures
-- SendGrid API errors
+- Brevo API errors
 - Network errors
 
 ## Email Templates

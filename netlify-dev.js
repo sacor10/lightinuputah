@@ -2,9 +2,13 @@ const express = require('express');
 const path = require('path');
 const compression = require('compression');
 const helmet = require('helmet');
+const { handler } = require('./netlify/functions/contact');
 
 const app = express();
 const PORT = process.env.PORT || 8888;
+
+// Parse JSON bodies
+app.use(express.json());
 
 // Security middleware
 app.use(helmet({
@@ -22,6 +26,36 @@ app.use((req, res, next) => {
 
 // Compression middleware
 app.use(compression());
+
+// Serve Netlify Functions
+app.all('/.netlify/functions/contact', async (req, res) => {
+  try {
+    // Convert Express req/res to Netlify function event/context format
+    const event = {
+      httpMethod: req.method,
+      path: req.path,
+      queryStringParameters: req.query,
+      headers: req.headers,
+      body: req.method === 'POST' ? JSON.stringify(req.body) : null
+    };
+    
+    const context = {};
+    
+    // Call the Netlify function handler
+    const result = await handler(event, context);
+    
+    // Set headers from function response
+    Object.keys(result.headers || {}).forEach(key => {
+      res.setHeader(key, result.headers[key]);
+    });
+    
+    // Send response
+    res.status(result.statusCode).send(result.body);
+  } catch (error) {
+    console.error('Function error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, 'build')));
@@ -67,4 +101,5 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Netlify dev server running on port ${PORT}`);
   console.log(`Serving static files from: ${path.join(__dirname, 'build')}`);
-}); 
+  console.log(`Netlify Functions available at: http://localhost:${PORT}/.netlify/functions/contact`);
+});
