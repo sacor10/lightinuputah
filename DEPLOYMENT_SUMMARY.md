@@ -25,7 +25,7 @@ The migration to **Netlify Static + Netlify Functions** is **COMPLETE** and read
 - **Dependencies**: `netlify/functions/package.json`
 - **Features**: 
   - reCAPTCHA verification
-  - SendGrid email sending
+  - Brevo email sending
   - CORS headers for cross-origin requests
   - Error handling and logging
 
@@ -47,7 +47,7 @@ The migration to **Netlify Static + Netlify Functions** is **COMPLETE** and read
 
 2. **Set Environment Variables**:
    ```bash
-   netlify env:set SENDGRID_API_KEY "your-sendgrid-key"
+   netlify env:set BREVO_API_KEY "your-brevo-api-key"
    netlify env:set RECAPTCHA_SECRET_KEY "your-recaptcha-secret"
    netlify env:set REACT_APP_RECAPTCHA_SITE_KEY "your-recaptcha-site-key"
    netlify env:set REACT_APP_CONTENTFUL_SPACE_ID "your-contentful-space-id"
@@ -77,7 +77,7 @@ The migration to **Netlify Static + Netlify Functions** is **COMPLETE** and read
 ### ✅ **Post-Deployment Tests**
 - [ ] Site loads correctly on Netlify domain
 - [ ] Contact form submits successfully
-- [ ] Emails are sent via SendGrid
+- [ ] Emails are sent via Brevo
 - [ ] reCAPTCHA verification works
 - [ ] CORS headers allow form submission
 - [ ] Error handling works properly
@@ -145,13 +145,13 @@ The migration to **Netlify Static + Netlify Functions** is **COMPLETE** and read
 
 2. **Function Errors**:
    - Check environment variables are set
-   - Verify SendGrid API key is valid
+   - Verify Brevo API key is valid
    - Review function logs for detailed errors
 
 3. **Contact Form Issues**:
    - Test reCAPTCHA configuration
    - Verify CORS headers are correct
-   - Check email delivery in SendGrid dashboard
+   - Check email delivery in Brevo dashboard
 
 ### **Rollback Strategy**
 
@@ -174,7 +174,7 @@ If issues occur:
 
 - **Netlify Documentation**: [docs.netlify.com](https://docs.netlify.com)
 - **Netlify Functions**: [docs.netlify.com/functions](https://docs.netlify.com/functions)
-- **SendGrid Support**: [sendgrid.com/support](https://sendgrid.com/support)
+- **Brevo Support**: [brevo.com/support](https://www.brevo.com/support)
 - **reCAPTCHA Docs**: [developers.google.com/recaptcha](https://developers.google.com/recaptcha)
 
 ---

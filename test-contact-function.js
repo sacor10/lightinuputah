@@ -44,8 +44,8 @@ async function testContactFunction() {
   } catch (error) {
     console.error('❌ Error testing function:', error.message);
     
-    if (error.message.includes('SENDGRID_API_KEY')) {
-      console.log('💡 This is expected - SENDGRID_API_KEY environment variable is not set');
+    if (error.message.includes('BREVO_API_KEY')) {
+      console.log('💡 This is expected - BREVO_API_KEY environment variable is not set');
       console.log('Set this in Netlify dashboard for production use');
     }
   }
