@@ -158,13 +158,13 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100%;
-  height: 100%;
-  border: none;
-  /* Scale iframe aggressively to eliminate ALL black bars */
-  transform: translate(-50%, -50%) scale(1.5);
-  min-width: 100%;
+  width: 100vw;
+  height: 56.25vw;
   min-height: 100%;
+  min-width: 177.77vh;
+  border: none;
+  /* Scale to ensure full coverage with no black bars */
+  transform: translate(-50%, -50%) scale(1.3);
 }
 
 .hero-youtube.hidden {
