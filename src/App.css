@@ -156,18 +156,15 @@ body {
 .hero-youtube {
   pointer-events: none;
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
   width: 100%;
   height: 100%;
   border: none;
-  /* Scale iframe to cover entire area while maintaining aspect ratio */
-  min-height: 56.25vw; /* 16:9 aspect ratio based on width */
-  min-width: 177.77vh; /* 16:9 aspect ratio based on height */
-  /* Hide YouTube controls and branding */
-  margin-top: -10% !important;
-  height: 120% !important;
-  transform: scale(1.1);
+  /* Scale iframe aggressively to eliminate ALL black bars */
+  transform: translate(-50%, -50%) scale(1.5);
+  min-width: 100%;
+  min-height: 100%;
 }
 
 .hero-youtube.hidden {
@@ -585,6 +582,16 @@ body {
   .hero {
     min-height: 300px;
     padding: 1.5rem 0;
+  }
+  
+  .hero-youtube {
+    /* Scale aggressively on mobile to eliminate black bars */
+    transform: translate(-50%, -50%) scale(1.8) !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: 100vw !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
   }
   
   .hero-title {
