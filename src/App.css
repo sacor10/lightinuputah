@@ -131,10 +131,63 @@ body {
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #ec4899 0%, #95e6c3 50%, #3b82f6 100%);
+  position: relative;
   color: white;
   padding: 2.5rem 0;
   text-align: center;
+  overflow: hidden;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.hero-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.hero-youtube {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  /* Scale iframe to cover entire area while maintaining aspect ratio */
+  min-height: 56.25vw; /* 16:9 aspect ratio based on width */
+  min-width: 177.77vh; /* 16:9 aspect ratio based on height */
+  /* Hide YouTube controls and branding */
+  margin-top: -10% !important;
+  height: 120% !important;
+  transform: scale(1.1);
+}
+
+.hero-youtube.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
 }
 
 /* About Section */
@@ -172,7 +225,7 @@ body {
 .hero-subtitle {
   font-size: 1.2rem;
   margin-bottom: 2rem;
-  color: #233642;
+  color: #352996;
   font-weight: 600;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
@@ -527,6 +580,11 @@ body {
   .header.shrunk .header-nav a {
     padding: 0.3rem 0.5rem;
     font-size: 0.65rem;
+  }
+  
+  .hero {
+    min-height: 300px;
+    padding: 1.5rem 0;
   }
   
   .hero-title {
