@@ -5,6 +5,14 @@ export const validateEmail = (email: string): boolean => {
   return FORM_VALIDATION.EMAIL_REGEX.test(email);
 };
 
+export const isGmailEmail = (email: string): boolean => {
+  if (!validateEmail(email)) {
+    return false;
+  }
+  const emailLower = email.toLowerCase().trim();
+  return emailLower.endsWith('@gmail.com');
+};
+
 export const validateField = (name: keyof ContactFormData, value: string): string | undefined => {
   switch (name) {
     case 'name':

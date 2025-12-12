@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import './ContactForm.css';
 import { API_ENDPOINTS } from '../constants';
-import { validateEmail, validateField, validateForm } from '../utils/validation';
+import { validateEmail, validateField, validateForm, isGmailEmail } from '../utils/validation';
 
 interface ContactFormData {
   name: string;
@@ -27,6 +27,7 @@ const ContactForm: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isNonGmailWarningDismissed, setIsNonGmailWarningDismissed] = useState(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
 
@@ -44,6 +45,11 @@ const ContactForm: React.FC = () => {
         ...prev,
         [name]: undefined
       }));
+    }
+    
+    // Reset non-gmail warning dismissal when email changes
+    if (name === 'email') {
+      setIsNonGmailWarningDismissed(false);
     }
   };
 
@@ -110,6 +116,45 @@ const ContactForm: React.FC = () => {
     }
   };
 
+  // Helper function to determine field validation state
+  const getFieldValidationState = (name: keyof ContactFormData): 'valid' | 'invalid' | 'warning' | 'neutral' => {
+    const value = formData[name];
+    const error = validationErrors[name];
+    
+    if (error) {
+      return 'invalid';
+    }
+    
+    if (name === 'name') {
+      const trimmed = value.trim();
+      if (trimmed.length >= 5 && trimmed.length <= 50) {
+        return 'valid';
+      }
+    } else if (name === 'email') {
+      if (validateEmail(value)) {
+        const emailLower = value.toLowerCase().trim();
+        if (isGmailEmail(value)) {
+          return 'valid';
+        } else if (emailLower.includes('@gmail') && !emailLower.endsWith('@gmail.com')) {
+          // User is in the process of typing @gmail.com, don't show warning yet
+          return 'valid';
+        } else if (!isNonGmailWarningDismissed) {
+          // Valid email that doesn't contain @gmail, show warning
+          return 'warning';
+        } else {
+          return 'valid';
+        }
+      }
+    } else if (name === 'message') {
+      const trimmed = value.trim();
+      if (trimmed.length >= 10 && trimmed.length <= 1000) {
+        return 'valid';
+      }
+    }
+    
+    return 'neutral';
+  };
+
   const isFormValid = formData.name.trim().length >= 5 && 
                      formData.name.trim().length <= 50 &&
                      validateEmail(formData.email) && 
@@ -147,7 +192,7 @@ const ContactForm: React.FC = () => {
             required
             disabled={isSubmitting}
             placeholder="Enter your full name (5-50 characters)"
-            className={validationErrors.name ? 'error' : ''}
+            className={getFieldValidationState('name')}
           />
           <small className="hint-text">5-50 characters required</small>
           {validationErrors.name && (
@@ -167,11 +212,24 @@ const ContactForm: React.FC = () => {
             required
             disabled={isSubmitting}
             placeholder="Enter your email address"
-            className={validationErrors.email ? 'error' : ''}
+            className={getFieldValidationState('email')}
           />
           <small className="hint-text">Must be a valid email address (e.g., user@example.com)</small>
           {validationErrors.email && (
             <div className="field-error">{validationErrors.email}</div>
+          )}
+          {getFieldValidationState('email') === 'warning' && !isNonGmailWarningDismissed && (
+            <div className="field-warning">
+              <button
+                type="button"
+                className="warning-dismiss"
+                onClick={() => setIsNonGmailWarningDismissed(true)}
+                aria-label="Dismiss warning"
+              >
+                ×
+              </button>
+              <span>Please check your email's spam folder for our response!</span>
+            </div>
           )}
         </div>
 
@@ -187,7 +245,7 @@ const ContactForm: React.FC = () => {
             required
             disabled={isSubmitting}
             placeholder="Tell us about your lighting project... (10-1000 characters)"
-            className={validationErrors.message ? 'error' : ''}
+            className={getFieldValidationState('message')}
           />
           <small className="hint-text">10-1000 characters required</small>
           {validationErrors.message && (

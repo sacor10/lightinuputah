@@ -75,16 +75,86 @@
   font-weight: 500;
 }
 
+.field-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #856404;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.warning-dismiss {
+  background: none;
+  border: none;
+  color: #856404;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.warning-dismiss:hover {
+  color: #533f03;
+}
+
+.warning-dismiss:focus {
+  outline: 2px solid #856404;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .form-group input.error,
-.form-group textarea.error {
+.form-group textarea.error,
+.form-group input.invalid,
+.form-group textarea.invalid {
   border-color: #dc3545;
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 }
 
 .form-group input.error:focus,
-.form-group textarea.error:focus {
+.form-group textarea.error:focus,
+.form-group input.invalid:focus,
+.form-group textarea.invalid:focus {
   border-color: #dc3545;
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
+.form-group input.valid,
+.form-group textarea.valid {
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.form-group input.valid:focus,
+.form-group textarea.valid:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.form-group input.warning,
+.form-group textarea.warning {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+}
+
+.form-group input.warning:focus,
+.form-group textarea.warning:focus {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
 }
 
 .recaptcha-container {
