@@ -13,6 +13,13 @@ export const isGmailEmail = (email: string): boolean => {
   return emailLower.endsWith('@gmail.com');
 };
 
+export const validatePhone = (phone: string): boolean => {
+  // Remove all non-digit characters
+  const digitsOnly = phone.replace(/\D/g, '');
+  // Check if it's exactly 10 digits (area code + 7 digits)
+  return FORM_VALIDATION.PHONE_REGEX.test(digitsOnly);
+};
+
 export const validateField = (name: keyof ContactFormData, value: string): string | undefined => {
   switch (name) {
     case 'name':
@@ -32,6 +39,14 @@ export const validateField = (name: keyof ContactFormData, value: string): strin
       }
       if (!validateEmail(value)) {
         return 'Please enter a valid email address';
+      }
+      break;
+    case 'phone':
+      if (!value.trim()) {
+        return 'Phone number is required';
+      }
+      if (!validatePhone(value)) {
+        return 'Phone number must be 10 digits with area code (numbers only)';
       }
       break;
     case 'message':
@@ -58,6 +73,7 @@ export const validateForm = (formData: ContactFormData, recaptchaToken: string |
   
   errors.name = validateField('name', formData.name);
   errors.email = validateField('email', formData.email);
+  errors.phone = validateField('phone', formData.phone);
   errors.message = validateField('message', formData.message);
   
   let errorMessage = '';

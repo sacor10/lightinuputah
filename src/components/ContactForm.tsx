@@ -2,24 +2,14 @@ import React, { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import './ContactForm.css';
 import { API_ENDPOINTS } from '../constants';
-import { validateEmail, validateField, validateForm, isGmailEmail } from '../utils/validation';
-
-interface ContactFormData {
-  name: string;
-  email: string;
-  message: string;
-}
-
-interface ValidationErrors {
-  name?: string;
-  email?: string;
-  message?: string;
-}
+import { validateEmail, validateField, validateForm, validatePhone, isGmailEmail } from '../utils/validation';
+import { ContactFormData, ValidationErrors } from '../types';
 
 const ContactForm: React.FC = () => {
   const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     email: '',
+    phone: '',
     message: ''
   });
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -30,13 +20,37 @@ const ContactForm: React.FC = () => {
   const [isNonGmailWarningDismissed, setIsNonGmailWarningDismissed] = useState(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
+  // Format phone number for display: (xxx) xxx-xxxx
+  const formatPhoneNumber = (digits: string): string => {
+    const cleaned = digits.replace(/\D/g, '');
+    if (cleaned.length === 0) return '';
+    if (cleaned.length <= 3) return `(${cleaned}`;
+    if (cleaned.length <= 6) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+  };
 
+  // Get display value for phone field (formatted)
+  const getPhoneDisplayValue = (): string => {
+    return formatPhoneNumber(formData.phone);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    // For phone field, extract digits and format for display
+    let processedValue = value;
+    if (name === 'phone') {
+      // Extract only digits
+      const digitsOnly = value.replace(/\D/g, '');
+      // Limit to 10 digits
+      const limitedDigits = digitsOnly.slice(0, 10);
+      // Store raw digits in formData
+      processedValue = limitedDigits;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
     
     // Clear validation error for this field when user starts typing
@@ -99,7 +113,7 @@ const ContactForm: React.FC = () => {
 
       if (response.ok) {
         setSubmitStatus('success');
-        setFormData({ name: '', email: '', message: '' });
+        setFormData({ name: '', email: '', phone: '', message: '' });
         setValidationErrors({});
         recaptchaRef.current?.reset();
         setRecaptchaToken(null);
@@ -145,6 +159,10 @@ const ContactForm: React.FC = () => {
           return 'valid';
         }
       }
+    } else if (name === 'phone') {
+      if (validatePhone(value)) {
+        return 'valid';
+      }
     } else if (name === 'message') {
       const trimmed = value.trim();
       if (trimmed.length >= 10 && trimmed.length <= 1000) {
@@ -158,6 +176,7 @@ const ContactForm: React.FC = () => {
   const isFormValid = formData.name.trim().length >= 5 && 
                      formData.name.trim().length <= 50 &&
                      validateEmail(formData.email) && 
+                     validatePhone(formData.phone) &&
                      formData.message.trim().length >= 10 && 
                      formData.message.trim().length <= 1000 &&
                      recaptchaToken;
@@ -230,6 +249,24 @@ const ContactForm: React.FC = () => {
               </button>
               <span>Please check your email's spam folder for our response!</span>
             </div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="phone">Phone Number *</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            value={getPhoneDisplayValue()}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            required
+            disabled={isSubmitting}
+            className={getFieldValidationState('phone')}
+          />
+          {validationErrors.phone && (
+            <div className="field-error">{validationErrors.phone}</div>
           )}
         </div>
 

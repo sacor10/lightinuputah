@@ -31,6 +31,7 @@ export const FORM_VALIDATION = {
   MESSAGE_MIN_LENGTH: 10,
   MESSAGE_MAX_LENGTH: 1000,
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  PHONE_REGEX: /^\d{10}$/, // Exactly 10 digits (area code + 7 digits)
 } as const;
 
 // API endpoints

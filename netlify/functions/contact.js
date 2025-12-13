@@ -59,10 +59,10 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { name, email, message, recaptchaToken } = JSON.parse(event.body);
+    const { name, email, phone, message, recaptchaToken } = JSON.parse(event.body);
 
     // Validate required fields
-    if (!name || !email || !message || !recaptchaToken) {
+    if (!name || !email || !phone || !message || !recaptchaToken) {
       return {
         statusCode: 400,
         headers,
@@ -82,6 +82,20 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           success: false,
           message: 'Please provide a valid email address'
+        }),
+      };
+    }
+
+    // Validate phone format (10 digits, numbers only)
+    const phoneDigitsOnly = phone.replace(/\D/g, '');
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phoneDigitsOnly)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: 'Phone number must be 10 digits with area code (numbers only)'
         }),
       };
     }
@@ -111,6 +125,7 @@ exports.handler = async (event, context) => {
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phoneDigitsOnly.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</p>
           <p><strong>Message:</strong></p>
           <div style="background: white; padding: 15px; border-radius: 5px; margin-top: 10px;">
             ${message.replace(/\n/g, '<br>')}
