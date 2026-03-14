@@ -21,7 +21,12 @@ const Spinner: React.FC = () => (
   </div>
 );
 
-const Gallery: React.FC = () => {
+interface GalleryProps {
+  selectedCategory?: string | null;
+  onCategoryApplied?: () => void;
+}
+
+const Gallery: React.FC<GalleryProps> = ({ selectedCategory, onCategoryApplied }) => {
   const { items: allItems, categories, loading } = useContentfulData();
   const [filtered, setFiltered] = useState<GalleryItem[]>([]);
   const [displayedItems, setDisplayedItems] = useState<GalleryItem[]>([]);
@@ -65,6 +70,15 @@ const Gallery: React.FC = () => {
   useEffect(() => {
     logger.log('Active category:', activeCategory);
   }, [activeCategory]);
+
+  // Apply filter when a service card is clicked
+  useEffect(() => {
+    if (selectedCategory && allItems.length > 0) {
+      handleFilter(selectedCategory);
+      onCategoryApplied?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
   // Accessibility: Escape to close, focus trap, return focus when fullscreen opens/closes
   useEffect(() => {

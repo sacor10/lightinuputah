@@ -212,10 +212,12 @@ const ContactForm: React.FC = () => {
             disabled={isSubmitting}
             placeholder="Enter your full name (5-50 characters)"
             className={getFieldValidationState('name')}
+            aria-invalid={!!validationErrors.name}
+            aria-describedby={validationErrors.name ? 'name-error' : undefined}
           />
           <small className="hint-text">5-50 characters required</small>
           {validationErrors.name && (
-            <div className="field-error">{validationErrors.name}</div>
+            <div id="name-error" className="field-error">{validationErrors.name}</div>
           )}
         </div>
 
@@ -232,10 +234,12 @@ const ContactForm: React.FC = () => {
             disabled={isSubmitting}
             placeholder="Enter your email address"
             className={getFieldValidationState('email')}
+            aria-invalid={!!validationErrors.email}
+            aria-describedby={validationErrors.email ? 'email-error' : undefined}
           />
           <small className="hint-text">Must be a valid email address (e.g., user@example.com)</small>
           {validationErrors.email && (
-            <div className="field-error">{validationErrors.email}</div>
+            <div id="email-error" className="field-error">{validationErrors.email}</div>
           )}
           {getFieldValidationState('email') === 'warning' && !isNonGmailWarningDismissed && (
             <div className="field-warning">
@@ -264,9 +268,11 @@ const ContactForm: React.FC = () => {
             required
             disabled={isSubmitting}
             className={getFieldValidationState('phone')}
+            aria-invalid={!!validationErrors.phone}
+            aria-describedby={validationErrors.phone ? 'phone-error' : undefined}
           />
           {validationErrors.phone && (
-            <div className="field-error">{validationErrors.phone}</div>
+            <div id="phone-error" className="field-error">{validationErrors.phone}</div>
           )}
         </div>
 
@@ -283,10 +289,12 @@ const ContactForm: React.FC = () => {
             disabled={isSubmitting}
             placeholder="Tell us about your lighting project... (10-1000 characters)"
             className={getFieldValidationState('message')}
+            aria-invalid={!!validationErrors.message}
+            aria-describedby={validationErrors.message ? 'message-error' : undefined}
           />
           <small className="hint-text">10-1000 characters required</small>
           {validationErrors.message && (
-            <div className="field-error">{validationErrors.message}</div>
+            <div id="message-error" className="field-error">{validationErrors.message}</div>
           )}
         </div>
 

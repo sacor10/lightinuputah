@@ -11,7 +11,23 @@
     />
     <meta name="keywords" content="LED car lighting, Salt Lake City, Utah, car customization, underglow, headlights, interior lighting" />
     <meta name="author" content="LightinUpUtah" />
-    
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://lightinuputah.com/" />
+    <meta property="og:title" content="Lightin Up Utah - Professional LED Car Lighting Installation" />
+    <meta property="og:description" content="Professional LED car lighting installation services in Salt Lake City, Utah. Custom LED systems, headlights, interior lighting, and underglow installations." />
+    <meta property="og:image" content="https://lightinuputah.com/lightin-up-utah-icon-512.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Lightin Up Utah - Professional LED Car Lighting Installation" />
+    <meta name="twitter:description" content="Professional LED car lighting installation services in Salt Lake City, Utah. Custom LED systems, headlights, interior lighting, and underglow installations." />
+    <meta name="twitter:image" content="https://lightinuputah.com/lightin-up-utah-icon-512.png" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://lightinuputah.com/" />
+
     <!-- Performance optimizations -->
     <link rel="preconnect" href="https://images.ctfassets.net" />
     <link rel="preconnect" href="https://api.contentful.com" />
@@ -69,30 +85,47 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/lightin-up-utah-icon-192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
+    <!-- LocalBusiness structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Lightin Up Utah",
+      "description": "Professional LED car lighting installation services in Salt Lake City, Utah. Custom LED systems, headlights, interior lighting, and underglow installations.",
+      "image": [
+        "https://images.ctfassets.net/t1sp0p547p5j/rvfApbXfEcNYJT4s1Vh2g/9347bd04d7099c194fb3892ab7d11f64/IMG_20230707_211746.jpg",
+        "https://images.ctfassets.net/t1sp0p547p5j/4kQds2wySLk3V3AXDtGfg/a993c7e025f09ddb1423b463af2c23b6/IMG_20221003_082011.jpg",
+        "https://images.ctfassets.net/t1sp0p547p5j/D9QR2wzRQfFdSlkpZF1TX/038fe525655431b519c48b140ec4d1e7/image.png",
+        "https://images.ctfassets.net/t1sp0p547p5j/3TcMZXZofb9C7qhXHXFhJr/120ed07baccaed1ba585d44297cb7eff/FB_IMG_1636844406578.jpg"
+      ],
+      "priceRange": "$$ - Contact for estimate",
+      "url": "https://lightinuputah.com",
+      "areaServed": {
+        "@type": "City",
+        "name": "Salt Lake City",
+        "addressRegion": "UT"
+      },
+      "sameAs": [
+        "https://www.instagram.com/lightinuputah/"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "info@lightinuputah.com",
+        "contactType": "customer service"
+      }
+    }
+    </script>
+
     <!-- Performance monitoring -->
     <script>
-      // Performance monitoring
       window.addEventListener('load', function() {
         if ('performance' in window) {
-          const navigation = performance.getEntriesByType('navigation')[0];
+          var navigation = performance.getEntriesByType('navigation')[0];
           if (navigation) {
             console.log('Page load time:', navigation.loadEventEnd - navigation.loadEventStart, 'ms');
           }
         }
       });
-      
-      // Service Worker registration for caching
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-              console.log('SW registered: ', registration);
-            })
-            .catch(function(registrationError) {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
     </script>
     
     <title>Lightin Up Utah - Professional LED Car Lighting Installation</title>

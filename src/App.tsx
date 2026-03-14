@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef } from 'react';
+import React, { Suspense, useEffect, useRef, useState, useCallback } from 'react';
 
 import './App.css';
 import ContactForm from './components/ContactForm';
@@ -31,6 +31,12 @@ const GallerySkeleton: React.FC = () => (
 const App: React.FC = () => {
   const isMobile = useIsMobile();
   const headerRef = useRef<HTMLElement>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const handleServiceClick = useCallback((category: string) => {
+    setSelectedCategory(category);
+    document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -79,6 +85,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <header ref={headerRef} className="header">
         <div className="header-flex">
           <div className="header-image-container">
@@ -100,6 +107,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      <main id="main-content">
       <section className="hero">
         <iframe
           className="hero-video hero-youtube"
@@ -111,7 +119,7 @@ const App: React.FC = () => {
         />
         <div className="hero-overlay"></div>
         <div className="container hero-content">
-          <h2 className="hero-title">Professional LED Car Lighting Installation</h2>
+          <h1 className="hero-title">Professional LED Car Lighting Installation</h1>
           <p className="hero-subtitle">Transform your vehicle with custom LED lighting solutions in Salt Lake City, Utah</p>
         </div>
       </section>
@@ -138,22 +146,22 @@ const App: React.FC = () => {
         <div className="container">
           <h2>Our Services</h2>
           <div className="services-grid">
-            <div className="service-card">
+            <button className="service-card" onClick={() => handleServiceClick('full LED systems')}>
               <h3>Full LED Systems</h3>
               <p>Complete LED lighting system installations for your vehicle</p>
-            </div>
-            <div className="service-card">
+            </button>
+            <button className="service-card" onClick={() => handleServiceClick('headlights')}>
               <h3>Headlights</h3>
               <p>Custom headlight modifications and LED upgrades</p>
-            </div>
-            <div className="service-card">
+            </button>
+            <button className="service-card" onClick={() => handleServiceClick('starlights/interior lights')}>
               <h3>Starlights/Interior Lights</h3>
               <p>Interior lighting solutions including starlight headliners</p>
-            </div>
-            <div className="service-card">
+            </button>
+            <button className="service-card" onClick={() => handleServiceClick('underglow/exterior lights')}>
               <h3>Underglow/Exterior Lights</h3>
               <p>Exterior lighting including underglow and accent lighting</p>
-            </div>
+            </button>
           </div>
         </div>
       </section>
@@ -161,7 +169,7 @@ const App: React.FC = () => {
       <section id="gallery" className="gallery">
         <ErrorBoundary>
           <Suspense fallback={<GallerySkeleton />}>
-            <Gallery />
+            <Gallery selectedCategory={selectedCategory} onCategoryApplied={() => setSelectedCategory(null)} />
           </Suspense>
         </ErrorBoundary>
       </section>
@@ -188,6 +196,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
+      </main>
       <footer className="footer">
         <div className="container">
           <p>&copy; 2025 LightinUpUtah - Professional LED Car Lighting Installation</p>
