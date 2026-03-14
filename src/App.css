@@ -723,6 +723,8 @@ body {
     gap: 0.5rem;
     margin-top: 0;
     margin-bottom: 0;
+    width: 100%;
+    justify-content: center;
   }
   
   .header-nav .container {
@@ -773,10 +775,12 @@ body {
 
   .header.shrunk .header-nav a.nav-disclaimer {
     max-height: 0;
+    max-width: 0;
     opacity: 0;
     padding: 0;
     margin: 0;
     border-width: 0;
+    overflow: hidden;
   }
   
   .hero {
