@@ -102,6 +102,7 @@ const App: React.FC = () => {
               <a href="#services">Services</a>
               <a href="#gallery">Gallery</a>
               <a href="#contact">Contact</a>
+              <a href="#legality" className="nav-disclaimer">Disclaimer</a>
             </div>
           </nav>
         </div>
@@ -193,6 +194,42 @@ const App: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="legality" className="legality">
+        <div className="container">
+          <h2>Is underglow or LED lighting on my vehicle legal?</h2>
+          <p className="legality-intro">
+            LED underglow, accent lights, and interior lighting on your vehicle are <strong className="legality-highlight-green">not specifically banned</strong> in Utah.
+            Under <strong><a href="https://le.utah.gov/xcode/Title41/Chapter6A/41-6a-S1616.html" target="_blank" rel="noopener noreferrer">Utah Code §41-6a-1616</a></strong>, the law prohibits certain colors and flashing lights on non-emergency vehicles,
+            but there is no specific prohibition against underglow or LED accent lighting on cars and trucks.
+          </p>
+          <div className="legality-cards">
+            <div className="legality-card legality-card-restricted">
+              <h3>Restricted on Non-Emergency Vehicles</h3>
+              <ul>
+                <li><strong>Red and blue lights</strong> — reserved for emergency vehicles</li>
+                <li><strong>Flashing, rotating, or strobing lights</strong> — not permitted while driving on public roads</li>
+                <li><strong>Lights that impersonate emergency vehicles</strong> — any configuration that could be mistaken for law enforcement or emergency services</li>
+              </ul>
+            </div>
+            <div className="legality-card legality-card-tips">
+              <h3>Tips for Staying Legal</h3>
+              <ul>
+                <li>Avoid <strong>red and blue</strong> colors on exterior lighting</li>
+                <li>Turn off any <strong>flashing or strobing modes</strong> while driving on public roads</li>
+                <li>Keep underglow and accent lights in <strong>legal colors</strong> like green, white, amber, or purple</li>
+                <li>Make sure your lighting <strong>does not obstruct</strong> required vehicle lights (headlights, brake lights, turn signals)</li>
+              </ul>
+            </div>
+          </div>
+          <p className="legality-link">
+            Read the full statute: <a href="https://le.utah.gov/xcode/Title41/Chapter6A/41-6a-S1616.html" target="_blank" rel="noopener noreferrer">Utah Code §41-6a-1616</a>
+          </p>
+          <p className="legality-disclaimer">
+            <em>This information is provided for general reference only and does not constitute legal advice. Laws can change — always verify current regulations with local authorities.</em>
+          </p>
         </div>
       </section>
 

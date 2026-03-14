@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
