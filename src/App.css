@@ -43,11 +43,12 @@ body {
 }
 
 .header {
-  background: url('./images/header-bg.jpg') center center/cover no-repeat;
+  background: #050515;
   color: white;
   height: 220px;
   display: flex;
   align-items: center;
+  overflow: hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
@@ -61,6 +62,8 @@ body {
 }
 
 .header-flex {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;

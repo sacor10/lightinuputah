@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" width="520" height="200">
+  <defs>
+    <linearGradient id="utahGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00BFFF"/>
+      <stop offset="35%" stop-color="#00A0E0"/>
+      <stop offset="70%" stop-color="#C850C0"/>
+      <stop offset="100%" stop-color="#FF1493"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ADFF2F"/>
+      <stop offset="100%" stop-color="#32CD32"/>
+    </linearGradient>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Russo+One&amp;display=swap');
+      .logo-text {
+        font-family: 'Russo One', 'Impact', 'Arial Black', sans-serif;
+        font-weight: 900;
+        font-style: italic;
+      }
+    </style>
+  </defs>
+  <g transform="rotate(-6, 260, 100) skewX(-15)">
+    <!-- LIGHTIN UP - black outer border -->
+    <text x="60" y="75" class="logo-text" font-size="62" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round">LIGHTIN UP</text>
+    <!-- LIGHTIN UP - pink/magenta stroke layer -->
+    <text x="60" y="75" class="logo-text" font-size="62" fill="none" stroke="#FF1493" stroke-width="6" stroke-linejoin="round">LIGHTIN UP</text>
+    <!-- LIGHTIN UP - green fill -->
+    <text x="60" y="75" class="logo-text" font-size="62" fill="url(#greenGrad)">LIGHTIN UP</text>
+
+    <!-- UTAH - black outer border -->
+    <text x="70" y="170" class="logo-text" font-size="110" fill="none" stroke="black" stroke-width="8" stroke-linejoin="round">UTAH</text>
+    <!-- UTAH - gradient fill (blue to pink) -->
+    <text x="70" y="170" class="logo-text" font-size="110" fill="url(#utahGrad)">UTAH</text>
+  </g>
+</svg>

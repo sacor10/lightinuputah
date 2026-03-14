@@ -3,7 +3,8 @@ import React, { Suspense, useEffect, useRef, useState, useCallback } from 'react
 import './App.css';
 import ContactForm from './components/ContactForm';
 import ErrorBoundary from './components/ErrorBoundary';
-import headerImage from './images/logo.png';
+import LaserBackground from './components/LaserBackground';
+import { ReactComponent as LogoSvg } from './images/logo.svg';
 import { useIsMobile } from './hooks/useIsMobile';
 
 // Lazy load heavy components
@@ -87,13 +88,12 @@ const App: React.FC = () => {
     <div className="App">
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <header ref={headerRef} className="header">
+        <LaserBackground />
         <div className="header-flex">
           <div className="header-image-container">
-            <img 
-              src={headerImage} 
-              alt="LightinUpUtah" 
+            <LogoSvg
+              aria-label="LightinUpUtah"
               className="header-logo-image"
-              loading="eager"
               style={{ display: 'block' }}
             />
           </div>

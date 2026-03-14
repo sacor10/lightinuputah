@@ -4,7 +4,12 @@
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git stash:*)",
+      "Bash(find C:Userssacor -path */scheduled-tasks/* -type f)",
+      "Bash(grep -r \"SKILL\\\\|skill\" C:Userssacor.claude --include=*.json --include=*.md)",
+      "Bash(grep -r skill C:sourcelightinuputah --include=*.md)",
+      "Bash(grep -r \"\\\\.md\\\\|markdown\" C:Userssacor.claudepluginsmarketplaces --include=*.json)"
     ]
   }
 }
