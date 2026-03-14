@@ -143,6 +143,15 @@ body {
   margin: 0;
 }
 
+/* Desktop: hero same height as slideshow below it (70vh) */
+@media (min-width: 769px) {
+  .hero {
+    min-height: 70vh;
+    height: 70vh;
+    padding: 0;
+  }
+}
+
 .hero-video {
   position: absolute;
   top: 0;

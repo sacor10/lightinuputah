@@ -4,7 +4,8 @@ import { useContentfulData } from '../hooks/useContentfulData';
 import ContentfulService from '../services/contentfulService';
 import { convertToGalleryItems, GalleryItem } from '../utils/galleryUtils';
 import { logger } from '../utils/logger';
-import { GALLERY_CONFIG, BREAKPOINTS, TOUCH_CONFIG } from '../constants';
+import { GALLERY_CONFIG, TOUCH_CONFIG } from '../constants';
+import ImageOptimizer from './ImageOptimizer';
 import './Gallery.css';
 
 
@@ -30,6 +31,7 @@ const Gallery: React.FC = () => {
   const [fullscreenImage, setFullscreenImage] = useState<null | {
     url: string;
     title: string;
+    index: number;
   }>(null);
   const isMobile = useIsMobile();
   
@@ -39,29 +41,9 @@ const Gallery: React.FC = () => {
   const touchEndX = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-
-  // Helper to determine number of columns based on screen size
-  const getNumColumns = React.useCallback(() => {
-    if (typeof window !== 'undefined') {
-      if (window.innerWidth <= BREAKPOINTS.MOBILE) {
-        return Math.floor((window.innerWidth - GALLERY_CONFIG.MOBILE_PADDING) / GALLERY_CONFIG.MIN_COLUMN_WIDTH) || 1; // min 1 col
-      } else {
-        return Math.floor((window.innerWidth - GALLERY_CONFIG.DESKTOP_PADDING) / GALLERY_CONFIG.DESKTOP_COLUMN_WIDTH) || 1; // min 1 col
-      }
-    }
-    return isMobile ? 1 : 2;
-  }, [isMobile]);
-
-  const [numColumns, setNumColumns] = useState(getNumColumns());
-
-  useEffect(() => {
-    const handleResize = () => {
-      setNumColumns(getNumColumns());
-    };
-    window.addEventListener('resize', handleResize);
-    setNumColumns(getNumColumns());
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isMobile, getNumColumns]);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousActiveRef = useRef<HTMLElement | null>(null);
+  const galleryItemRefs = useRef<Map<number, HTMLButtonElement | null>>(new Map());
 
   useEffect(() => {
     if (allItems.length > 0) {
@@ -84,6 +66,86 @@ const Gallery: React.FC = () => {
     logger.log('Active category:', activeCategory);
   }, [activeCategory]);
 
+  // Accessibility: Escape to close, focus trap, return focus when fullscreen opens/closes
+  useEffect(() => {
+    if (!fullscreenImage) return;
+
+    const overlay = overlayRef.current;
+    const closeBtn = closeButtonRef.current;
+    if (!overlay || !closeBtn) return;
+
+    const openedBy = galleryItemRefs.current.get(fullscreenImage.index);
+    previousActiveRef.current = (openedBy ?? document.activeElement) as HTMLElement | null;
+    closeBtn.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setFullscreenImage(null);
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        const idx = fullscreenImage.index;
+        const prevIdx = idx <= 0 ? displayedItems.length - 1 : idx - 1;
+        const prev = displayedItems[prevIdx];
+        if (prev) {
+          const url = prev.fields.image.fields.file.url.startsWith('http')
+            ? prev.fields.image.fields.file.url
+            : `https:${prev.fields.image.fields.file.url}`;
+          setFullscreenImage({ url, title: prev.fields.title, index: prevIdx });
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        const idx = fullscreenImage.index;
+        const nextIdx = idx >= displayedItems.length - 1 ? 0 : idx + 1;
+        const next = displayedItems[nextIdx];
+        if (next) {
+          const url = next.fields.image.fields.file.url.startsWith('http')
+            ? next.fields.image.fields.file.url
+            : `https:${next.fields.image.fields.file.url}`;
+          setFullscreenImage({ url, title: next.fields.title, index: nextIdx });
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusables = overlay.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    overlay.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      overlay.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [fullscreenImage, displayedItems]);
+
+  // Return focus when fullscreen closes (not when navigating to next/prev)
+  useEffect(() => {
+    if (!fullscreenImage && previousActiveRef.current) {
+      previousActiveRef.current.focus();
+      previousActiveRef.current = null;
+    }
+  }, [fullscreenImage]);
+
   // Handle mobile back gesture to close fullscreen image
   useEffect(() => {
     if (!fullscreenImage || !isMobile) return;
@@ -103,25 +165,41 @@ const Gallery: React.FC = () => {
     };
 
     const handleTouchEnd = (e: Event) => {
-      if (touchStartX.current === null || touchStartY.current === null || 
+      if (touchStartX.current === null || touchStartY.current === null ||
           touchEndX.current === null || touchEndY.current === null) return;
 
       const touchEvent = e as TouchEvent;
       const deltaX = touchEndX.current - touchStartX.current;
       const deltaY = touchEndY.current - touchStartY.current;
-      
-      // Check if it's a horizontal swipe (more horizontal than vertical)
       const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
-      
-      // Check if it's a right-to-left swipe (back gesture) - more sensitive threshold
-      const isBackGesture = deltaX > TOUCH_CONFIG.BACK_GESTURE_THRESHOLD && isHorizontalSwipe && Math.abs(deltaX) > TOUCH_CONFIG.MIN_SWIPE_DISTANCE;
-      
-      if (isBackGesture) {
+      const minSwipe = TOUCH_CONFIG.MIN_SWIPE_DISTANCE;
+      const backThreshold = 120;
+
+      if (isHorizontalSwipe && Math.abs(deltaX) > minSwipe) {
         touchEvent.preventDefault();
-        setFullscreenImage(null);
+        if (deltaX > backThreshold) {
+          setFullscreenImage(null);
+        } else if (deltaX > minSwipe && fullscreenImage) {
+          const prevIdx = fullscreenImage.index <= 0 ? displayedItems.length - 1 : fullscreenImage.index - 1;
+          const prev = displayedItems[prevIdx];
+          if (prev) {
+            const url = prev.fields.image.fields.file.url.startsWith('http')
+              ? prev.fields.image.fields.file.url
+              : `https:${prev.fields.image.fields.file.url}`;
+            setFullscreenImage({ url, title: prev.fields.title, index: prevIdx });
+          }
+        } else if (deltaX < -minSwipe && fullscreenImage) {
+          const nextIdx = fullscreenImage.index >= displayedItems.length - 1 ? 0 : fullscreenImage.index + 1;
+          const next = displayedItems[nextIdx];
+          if (next) {
+            const url = next.fields.image.fields.file.url.startsWith('http')
+              ? next.fields.image.fields.file.url
+              : `https:${next.fields.image.fields.file.url}`;
+            setFullscreenImage({ url, title: next.fields.title, index: nextIdx });
+          }
+        }
       }
-      
-      // Reset touch coordinates
+
       touchStartX.current = null;
       touchStartY.current = null;
       touchEndX.current = null;
@@ -148,7 +226,7 @@ const Gallery: React.FC = () => {
         overlay.removeEventListener('touchend', handleTouchEnd);
       }
     };
-  }, [fullscreenImage, isMobile]);
+  }, [fullscreenImage, isMobile, displayedItems]);
 
   const handleFilter = (category: string) => {
     const initialCount = isMobile ? GALLERY_CONFIG.INITIAL_ITEMS_MOBILE : GALLERY_CONFIG.INITIAL_ITEMS_DESKTOP;
@@ -179,24 +257,13 @@ const Gallery: React.FC = () => {
     }
   };
 
-  const handleLoadMore = async () => {
+  const handleLoadMore = () => {
     setLoadingMore(true);
-    
-    // Simulate a small delay to show the loading state and make the transition smoother
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
     const nextItems = filtered.slice(0, itemsToShow + GALLERY_CONFIG.LOAD_MORE_INCREMENT);
     setDisplayedItems(nextItems);
     setItemsToShow(itemsToShow + GALLERY_CONFIG.LOAD_MORE_INCREMENT);
     setLoadingMore(false);
   };
-
-  // Calculate if last row is not full
-  const lastRowCount = displayedItems.length % numColumns;
-  const shouldCenterLastRow =
-    displayedItems.length > 0 &&
-    lastRowCount > 0 &&
-    lastRowCount < numColumns;
 
   return (
     <div className="gallery-container">
@@ -229,47 +296,54 @@ const Gallery: React.FC = () => {
         </div>
       ) : allItems.length === 0 ? (
         <div className="gallery-empty">
-          <p>Gallery content is currently unavailable.</p>
-          <p>Please check back later or contact us for more information.</p>
+          <p className="gallery-empty-title">Gallery content is currently unavailable.</p>
+          <p className="gallery-empty-message">Please check back later or get in touch to see examples of our work.</p>
+          <a href="#contact" className="gallery-empty-cta">Get a Quote</a>
         </div>
       ) : (
         <>
-          <div className={`gallery-grid${shouldCenterLastRow ? ' gallery-grid--center-last-row' : ''}`}>
-            {displayedItems.map(item => (
-              <div className="gallery-item" key={item.sys.id}>
-                <img
-                  src={item.fields.image.fields.file.url.startsWith('http')
-                    ? item.fields.image.fields.file.url
-                    : `https:${item.fields.image.fields.file.url}`}
-                  alt={item.fields.title}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
+          <div className="gallery-grid">
+            {displayedItems.map((item, index) => {
+              const imageUrl = item.fields.image.fields.file.url.startsWith('http')
+                ? item.fields.image.fields.file.url
+                : `https:${item.fields.image.fields.file.url}`;
+              return (
+                <button
+                  type="button"
+                  className="gallery-item"
+                  key={item.sys.id}
+                  ref={el => { galleryItemRefs.current.set(index, el); }}
                   onClick={() => setFullscreenImage({
-                    url: item.fields.image.fields.file.url.startsWith('http')
-                      ? item.fields.image.fields.file.url
-                      : `https:${item.fields.image.fields.file.url}`,
-                    title: item.fields.title
+                    url: imageUrl,
+                    title: item.fields.title,
+                    index
                   })}
-                  style={{ cursor: 'pointer' }}
-                />
-                <div className="gallery-overlay">
-                  {item.fields.category && (
-                    <span 
-                      className={`category-tag clickable${activeCategory === item.fields.category ? ' active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFilter(item.fields.category);
-                      }}
-                    >
-                      {item.fields.category}
-                    </span>
-                  )}
-                  {item.fields.description && <p>{item.fields.description}</p>}
-                </div>
-              </div>
-            ))}
+                  aria-label={`View full size: ${item.fields.title}`}
+                >
+                  <ImageOptimizer
+                    src={imageUrl}
+                    alt={item.fields.title}
+                    className="gallery-item-image"
+                    loading="lazy"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                  <div className="gallery-overlay">
+                    {item.fields.category && (
+                      <span
+                        className={`category-tag clickable${activeCategory === item.fields.category ? ' active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFilter(item.fields.category);
+                        }}
+                      >
+                        {item.fields.category}
+                      </span>
+                    )}
+                    {item.fields.description && <p>{item.fields.description}</p>}
+                  </div>
+                </button>
+              );
+            })}
           </div>
           {displayedItems.length < filtered.length && (
             <div className="gallery-load-more">
@@ -295,6 +369,9 @@ const Gallery: React.FC = () => {
         <div
           ref={overlayRef}
           className="gallery-fullscreen-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Fullscreen image viewer"
           onClick={() => setFullscreenImage(null)}
           style={{
             position: 'fixed',
@@ -309,7 +386,12 @@ const Gallery: React.FC = () => {
             zIndex: 1000,
           }}
         >
+          <div className="gallery-fullscreen-announcer" aria-live="polite" aria-atomic="true">
+            Image {fullscreenImage.index + 1} of {displayedItems.length}: {fullscreenImage.title}
+          </div>
           <button
+            ref={closeButtonRef}
+            type="button"
             className="gallery-fullscreen-close"
             onClick={e => {
               e.stopPropagation();
