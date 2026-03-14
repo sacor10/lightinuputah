@@ -28,8 +28,8 @@
     <text x="60" y="75" class="logo-text" font-size="62" fill="url(#greenGrad)">LIGHTIN UP</text>
 
     <!-- UTAH - black outer border -->
-    <text x="70" y="170" class="logo-text" font-size="110" fill="none" stroke="black" stroke-width="8" stroke-linejoin="round">UTAH</text>
+    <text x="246" y="170" class="logo-text" font-size="110" text-anchor="middle" fill="none" stroke="black" stroke-width="8" stroke-linejoin="round">UTAH</text>
     <!-- UTAH - gradient fill (blue to pink) -->
-    <text x="70" y="170" class="logo-text" font-size="110" fill="url(#utahGrad)">UTAH</text>
+    <text x="246" y="170" class="logo-text" font-size="110" text-anchor="middle" fill="url(#utahGrad)">UTAH</text>
   </g>
 </svg>

@@ -1,153 +1,145 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 
-interface Star {
-  x: number;
-  y: number;
-  radius: number;
+interface Beam {
+  angle: number;
   color: string;
-  glowRadius: number;
-  phase: number;      // twinkle phase offset
-  speed: number;      // twinkle speed
-  minAlpha: number;   // dimmest state
+  glowColor: string;
+  width: number;
 }
 
-const COLORS = [
-  '#ff3366', '#ff0066', '#ff4488',  // pinks/reds
-  '#6633ff', '#8855ff', '#aa66ff',  // purples
-  '#3388ff', '#00aaff', '#00ccff',  // blues
-  '#00ffaa', '#00ff88', '#33ffcc',  // greens/teals
-  '#ffaa00', '#ff8800',             // ambers
-  '#ffffff', '#eeeeff', '#ccddff',  // whites/cool whites
+// Laser beams spanning from -88 to +88 degrees to fill the entire header
+const BEAMS: Beam[] = [
+  { angle: -88, color: '#ff0044', glowColor: 'rgba(255,0,68,0.25)', width: 1.5 },
+  { angle: -82, color: '#00ff88', glowColor: 'rgba(0,255,136,0.3)', width: 1.5 },
+  { angle: -76, color: '#00ccff', glowColor: 'rgba(0,204,255,0.3)', width: 2 },
+  { angle: -70, color: '#00ffcc', glowColor: 'rgba(0,255,204,0.25)', width: 1.5 },
+  { angle: -64, color: '#3366ff', glowColor: 'rgba(51,102,255,0.3)', width: 2 },
+  { angle: -58, color: '#00ff66', glowColor: 'rgba(0,255,102,0.25)', width: 1.5 },
+  { angle: -52, color: '#ff3366', glowColor: 'rgba(255,51,102,0.3)', width: 2 },
+  { angle: -46, color: '#ff0088', glowColor: 'rgba(255,0,136,0.3)', width: 1.8 },
+  { angle: -40, color: '#00ccff', glowColor: 'rgba(0,204,255,0.3)', width: 2 },
+  { angle: -34, color: '#6633ff', glowColor: 'rgba(102,51,255,0.3)', width: 2 },
+  { angle: -28, color: '#ff3366', glowColor: 'rgba(255,51,102,0.25)', width: 1.5 },
+  { angle: -22, color: '#00ffee', glowColor: 'rgba(0,255,238,0.3)', width: 2 },
+  { angle: -16, color: '#ff00ff', glowColor: 'rgba(255,0,255,0.3)', width: 1.8 },
+  { angle: -10, color: '#ffff00', glowColor: 'rgba(255,255,0,0.2)', width: 1.2 },
+  { angle: -4, color: '#ff4444', glowColor: 'rgba(255,68,68,0.3)', width: 2 },
+  { angle: 2, color: '#00ff88', glowColor: 'rgba(0,255,136,0.3)', width: 1.8 },
+  { angle: 8, color: '#ff0088', glowColor: 'rgba(255,0,136,0.3)', width: 1.8 },
+  { angle: 14, color: '#00ccff', glowColor: 'rgba(0,204,255,0.25)', width: 1.5 },
+  { angle: 20, color: '#ff6600', glowColor: 'rgba(255,102,0,0.3)', width: 2 },
+  { angle: 26, color: '#00ffee', glowColor: 'rgba(0,255,238,0.3)', width: 2 },
+  { angle: 32, color: '#ff3300', glowColor: 'rgba(255,51,0,0.3)', width: 2 },
+  { angle: 38, color: '#ff66cc', glowColor: 'rgba(255,102,204,0.25)', width: 1.5 },
+  { angle: 44, color: '#00ffcc', glowColor: 'rgba(0,255,204,0.3)', width: 2 },
+  { angle: 50, color: '#3366ff', glowColor: 'rgba(51,102,255,0.3)', width: 2 },
+  { angle: 56, color: '#ff00ff', glowColor: 'rgba(255,0,255,0.25)', width: 1.5 },
+  { angle: 62, color: '#ff6600', glowColor: 'rgba(255,102,0,0.3)', width: 1.8 },
+  { angle: 68, color: '#00ff66', glowColor: 'rgba(0,255,102,0.3)', width: 2 },
+  { angle: 74, color: '#3333ff', glowColor: 'rgba(51,51,255,0.3)', width: 2 },
+  { angle: 80, color: '#ff3333', glowColor: 'rgba(255,50,50,0.3)', width: 1.8 },
+  { angle: 88, color: '#00ff88', glowColor: 'rgba(0,255,136,0.25)', width: 1.5 },
 ];
-
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 0) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-function generateStars(count: number): Star[] {
-  const rand = seededRandom(42);
-  const stars: Star[] = [];
-  for (let i = 0; i < count; i++) {
-    const colorIdx = Math.floor(rand() * COLORS.length);
-    const isBright = rand() < 0.15;
-    const radius = isBright ? 1.2 + rand() * 1.3 : 0.5 + rand() * 0.8;
-    stars.push({
-      x: rand(),
-      y: rand(),
-      radius,
-      color: COLORS[colorIdx],
-      glowRadius: radius * (isBright ? 8 : 4),
-      phase: rand() * Math.PI * 2,
-      speed: 0.3 + rand() * 1.2,
-      minAlpha: isBright ? 0.4 : 0.15,
-    });
-  }
-  return stars;
-}
-
-const STAR_COUNT = 350;
-const STARS = generateStars(STAR_COUNT);
 
 const LaserBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
 
-  useEffect(() => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
     const parent = canvas.parentElement;
     if (!parent) return;
 
-    let w = 0;
-    let h = 0;
-    let dpr = 1;
-    let needsResize = true;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = parent.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
 
-    const resize = () => {
-      needsResize = true;
-    };
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
 
-    const applyResize = () => {
-      dpr = window.devicePixelRatio || 1;
-      const rect = parent.getBoundingClientRect();
-      w = rect.width;
-      h = rect.height;
-      if (w === 0 || h === 0) return;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-      needsResize = false;
-    };
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.scale(dpr, dpr);
 
-    const draw = (time: number) => {
-      if (needsResize) applyResize();
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Dark background gradient
+    const bgGrad = ctx.createRadialGradient(w / 2, h * 1.2, 0, w / 2, h * 0.5, w * 0.8);
+    bgGrad.addColorStop(0, '#1a0a2e');
+    bgGrad.addColorStop(0.4, '#0d0d2b');
+    bgGrad.addColorStop(1, '#050515');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
 
-      // Dark background
-      const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
-      bgGrad.addColorStop(0, '#0a0a1a');
-      bgGrad.addColorStop(1, '#030308');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, w, h);
+    // Origin point: bottom center
+    const ox = w / 2;
+    const oy = h + 10;
+    const beamLength = Math.max(w, h) * 2;
 
-      const t = time / 1000;
+    for (const beam of BEAMS) {
+      const rad = (beam.angle * Math.PI) / 180;
+      const ex = ox + Math.sin(rad) * beamLength;
+      const ey = oy - Math.cos(rad) * beamLength;
 
+      // Wide glow
+      ctx.save();
       ctx.globalCompositeOperation = 'screen';
+      ctx.strokeStyle = beam.glowColor;
+      ctx.lineWidth = beam.width * 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
 
-      for (const star of STARS) {
-        const sx = star.x * w;
-        const sy = star.y * h;
+      // Medium glow
+      ctx.strokeStyle = beam.glowColor;
+      ctx.lineWidth = beam.width * 2;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
 
-        // Twinkle: smooth sine wave oscillation
-        const twinkle = Math.sin(t * star.speed + star.phase);
-        const alpha = star.minAlpha + (1 - star.minAlpha) * (0.5 + 0.5 * twinkle);
+      // Bright core
+      ctx.strokeStyle = beam.color;
+      ctx.lineWidth = beam.width * 0.5;
+      ctx.shadowColor = beam.color;
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
 
-        // Outer glow
-        const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, star.glowRadius);
-        glow.addColorStop(0, star.color + hexAlpha(alpha * 0.5));
-        glow.addColorStop(0.4, star.color + hexAlpha(alpha * 0.15));
-        glow.addColorStop(1, star.color + '00');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(sx, sy, star.glowRadius, 0, Math.PI * 2);
-        ctx.fill();
+      ctx.restore();
+    }
 
-        // Bright core
-        ctx.fillStyle = star.color + hexAlpha(alpha);
-        ctx.beginPath();
-        ctx.arc(sx, sy, star.radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.globalCompositeOperation = 'source-over';
-
-      animRef.current = requestAnimationFrame(draw);
-    };
-
-    applyResize();
-    animRef.current = requestAnimationFrame(draw);
-
-    window.addEventListener('resize', resize);
-
-    // Re-size continuously as the header transitions between heights
-    const observer = new ResizeObserver(() => resize());
-    observer.observe(parent);
-
-    return () => {
-      cancelAnimationFrame(animRef.current);
-      window.removeEventListener('resize', resize);
-      observer.disconnect();
-    };
+    // Subtle vignette
+    const vignette = ctx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.8);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.4)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
   }, []);
+
+  useEffect(() => {
+    draw();
+    const handleResize = () => draw();
+    window.addEventListener('resize', handleResize);
+    const canvas = canvasRef.current;
+    const parent = canvas?.parentElement;
+    let observer: ResizeObserver | undefined;
+    if (parent) {
+      observer = new ResizeObserver(() => {
+        requestAnimationFrame(draw);
+      });
+      observer.observe(parent);
+    }
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer?.disconnect();
+    };
+  }, [draw]);
 
   return (
     <canvas
@@ -164,11 +156,5 @@ const LaserBackground: React.FC = () => {
     />
   );
 };
-
-function hexAlpha(a: number): string {
-  const clamped = Math.max(0, Math.min(1, a));
-  const hex = Math.round(clamped * 255).toString(16);
-  return hex.length === 1 ? '0' + hex : hex;
-}
 
 export default LaserBackground;
