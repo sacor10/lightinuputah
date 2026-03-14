@@ -31,7 +31,8 @@ const GallerySkeleton: React.FC = () => (
 
 const App: React.FC = () => {
   const isMobile = useIsMobile();
-  const headerRef = useRef<HTMLElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [isShrunk, setIsShrunk] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleServiceClick = useCallback((category: string) => {
@@ -39,55 +40,27 @@ const App: React.FC = () => {
     document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
+  // Intersection Observer: when the sentinel scrolls out of view, shrink the header
   useEffect(() => {
-    const header = headerRef.current;
-    if (!header) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
-    let ticking = false;
-    let isShrunk = false;
-    let lastScrollY = 0;
-    let scrollDirection = 'down';
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Sentinel not visible → user has scrolled past it → shrink
+        setIsShrunk(!entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
 
-    const updateHeader = () => {
-      const scrollY = window.scrollY;
-      
-      // Determine scroll direction
-      if (scrollY > lastScrollY) {
-        scrollDirection = 'down';
-      } else if (scrollY < lastScrollY) {
-        scrollDirection = 'up';
-      }
-      
-      // Use more robust hysteresis with direction awareness
-      if (!isShrunk && scrollY > 120 && scrollDirection === 'down') {
-        // Shrink when scrolling down past 120px
-        header.classList.add('shrunk');
-        isShrunk = true;
-      } else if (isShrunk && scrollY < 80 && scrollDirection === 'up') {
-        // Expand when scrolling back up past 80px
-        header.classList.remove('shrunk');
-        isShrunk = false;
-      }
-      
-      lastScrollY = scrollY;
-      ticking = false;
-    };
-
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(updateHeader);
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    observer.observe(sentinel);
+    return () => observer.disconnect();
   }, []);
 
   return (
     <div className="App">
       <a href="#main-content" className="skip-link">Skip to main content</a>
-      <header ref={headerRef} className="header">
+      <header className={`header${isShrunk ? ' shrunk' : ''}`}>
         <LaserBackground />
         <div className="header-flex">
           <div className="header-image-container">
@@ -107,6 +80,8 @@ const App: React.FC = () => {
           </nav>
         </div>
       </header>
+      {/* Invisible sentinel — when it scrolls behind the sticky header, the header shrinks */}
+      <div ref={sentinelRef} aria-hidden="true" style={{ height: 1, marginTop: -1 }} />
 
       <main id="main-content">
       <section className="hero">

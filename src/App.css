@@ -54,7 +54,6 @@ body {
   top: 0;
   z-index: 1000;
   transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: height;
 }
 
 .header.shrunk {
@@ -669,7 +668,7 @@ body {
   }
   
   .header {
-    height: 150px;
+    height: 190px;
     padding: 0;
     overflow: hidden;
   }
@@ -695,19 +694,23 @@ body {
   }
   
   .header-image-container {
-    height: 80px;
+    max-height: 80px;
+    width: 100%;
     margin-bottom: 0.5rem;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                margin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-top: 0;
-    will-change: transform, opacity;
+    overflow: hidden;
   }
-  
+
   .header.shrunk .header-image-container {
-    transform: translateY(-120px);
+    max-height: 0;
     opacity: 0;
+    margin-bottom: 0;
   }
   
   .header-logo-image {
@@ -718,46 +721,62 @@ body {
   
   .header-nav {
     gap: 0.5rem;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-top: 0;
-    margin-bottom: 0;
-    will-change: transform;
-  }
-  
-  .header.shrunk .header-nav {
-    transform: translateY(-40px);
     margin-top: 0;
     margin-bottom: 0;
   }
   
   .header-nav .container {
     flex-direction: row;
-    gap: 0.5rem;
+    column-gap: 0.5rem;
+    row-gap: 0.25rem;
     align-items: center;
     justify-content: center;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
-  
+
   .header-nav a {
     padding: 0.4rem 0.7rem;
     font-size: 0.7rem;
     min-width: auto;
     white-space: nowrap;
   }
-  
+
   .header.shrunk .header-nav a {
     padding: 0.3rem 0.5rem;
     font-size: 0.65rem;
   }
 
+  .header-nav .container::before {
+    content: '';
+    flex-basis: 100%;
+    height: 0;
+    order: 3;
+  }
+
+  .header.shrunk .header-nav .container::before {
+    display: none;
+  }
+
   .header-nav a.nav-disclaimer {
+    order: 4;
+    margin: 0 auto;
     padding: 0.25rem 0.5rem;
     font-size: 0.55rem;
+    max-height: 2rem;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                margin 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .header.shrunk .header-nav a.nav-disclaimer {
-    padding: 0.2rem 0.4rem;
-    font-size: 0.5rem;
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+    border-width: 0;
   }
   
   .hero {
