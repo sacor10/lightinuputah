@@ -85,14 +85,18 @@ const App: React.FC = () => {
 
       <main id="main-content">
       <section className="hero">
-        <iframe
-          className="hero-video hero-youtube"
-          src="https://www.youtube.com/embed/DuyaDGjMzuE?autoplay=1&mute=1&loop=1&playlist=DuyaDGjMzuE&controls=0&modestbranding=1&rel=0&showinfo=0&enablejsapi=1&origin=https://localhost&disablekb=1&fs=0"
-          frameBorder="0"
-          allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-          allowFullScreen
-          title="G-Wagon LED Lighting Background Video"
-        />
+        <video
+          className="hero-video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={`${process.env.PUBLIC_URL}/gwagon-starlight-poster.jpg`}
+          aria-hidden="true"
+        >
+          <source src={`${process.env.PUBLIC_URL}/gwagon-starlight.mp4`} type="video/mp4" />
+        </video>
         <div className="hero-overlay"></div>
         <div className="container hero-content">
           <h1 className="hero-title">Professional LED Car Lighting Installation</h1>
