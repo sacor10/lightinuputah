@@ -9,6 +9,7 @@ const PORT = process.env.PORT || (process.env.NETLIFY_DEV ? 8888 : 3000);
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Disable helmet's CSP
+  xFrameOptions: false, // Allow the site to be embedded in iframes on any origin
 }));
 
 // Add our own CSP headers
@@ -29,7 +30,6 @@ app.use(express.static(path.join(__dirname, 'build')));
 // Security headers
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
