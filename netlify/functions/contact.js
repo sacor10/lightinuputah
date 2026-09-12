@@ -113,9 +113,9 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Email 1: Contact submission to info@lightinuputah.com
+    // Email 1: Contact submission notification to lightinuputah@gmail.com
     const contactSubmissionEmail = new brevo.SendSmtpEmail();
-    contactSubmissionEmail.to = [{ email: 'info@lightinuputah.com' }];
+    contactSubmissionEmail.to = [{ email: 'lightinuputah@gmail.com' }];
     contactSubmissionEmail.sender = { name: 'Lightin Up Utah', email: 'info@lightinuputah.com' };
     contactSubmissionEmail.replyTo = { email: email };
     contactSubmissionEmail.subject = `New Contact: ${name}`;
